@@ -626,7 +626,7 @@
         ];
 
         const DEFAULT_COURIER_DATA = [
-            // TIRIS (17 kurir)
+            // TIRIS (19 kurir)
             { id: '559336', name: 'WAHYU ARGA DINATA', title: 'Rider Dedicated', zone: 'TIRIS', assigned: 127, delivering: 0, delivered: 127, onhold: 0, desc: 'FINAL' },
             { id: '592876', name: 'MOHAMMAD ISHAQ', title: 'Rider Dedicated', zone: 'TIRIS', assigned: 189, delivering: 0, delivered: 189, onhold: 0, desc: 'FINAL' },
             { id: '736882', name: 'JUNAIDI', title: 'Rider Dedicated', zone: 'TIRIS', assigned: 116, delivering: 0, delivered: 113, onhold: 3, desc: 'FINAL' },
@@ -865,11 +865,6 @@
             const totalOnhold = rows.reduce((s, r) => s + (Number(r.onhold) || 0), 0);
             const todayPerformance = totalAssigned > 0 ? (totalDelivered / totalAssigned) * 100 : 0;
 
-            const masterMap = new Map();
-            masterKurir.forEach(m => {
-                masterMap.set(String(m.id).trim(), m);
-            });
-
             // Per Title
             const byTitle = TITLES.map(title => {
                 const matching = rows.filter(r => r.title === title);
@@ -1019,7 +1014,7 @@
 
             renderPieChart(agg.totalDelivered, agg.totalDelivering, agg.totalOnhold);
 
-            // 1. Performance Courier by Title (filter zero rows)
+            // 1. Performance Courier by Title
             const activeTitles = agg.byTitle.filter(t => t.assigned > 0 || t.delivered > 0 || t.onhold > 0);
             const titleSumAssigned = activeTitles.reduce((s, t) => s + t.assigned, 0);
             const titleSumDelivered = activeTitles.reduce((s, t) => s + t.delivered, 0);
@@ -1048,7 +1043,7 @@
                 </tr>
             `;
 
-            // 2. Outbound Allocation (filter zero rows)
+            // 2. Outbound Allocation
             const activeAlloc = agg.byTitle.filter(t => t.assigned > 0 || t.delivered > 0 || t.mpp > 0);
             const allocSumMpp = activeAlloc.reduce((s, t) => s + t.mpp, 0);
             const allocSumDelivered = activeAlloc.reduce((s, t) => s + t.delivered, 0);
@@ -1078,7 +1073,7 @@
                 </tr>
             `;
 
-            // 3. Performance Courier by District (filter zero rows)
+            // 3. Performance Courier by District
             const activeDistricts = agg.byDistrict.filter(d => d.assigned > 0 || d.delivered > 0 || d.onhold > 0);
             const distSumAssigned = activeDistricts.reduce((s, d) => s + d.assigned, 0);
             const distSumDelivered = activeDistricts.reduce((s, d) => s + d.delivered, 0);
@@ -1107,7 +1102,7 @@
                 </tr>
             `;
 
-            // 4. Outbound Allocation by District (filter zero rows)
+            // 4. Outbound Allocation by District
             const activeDistAlloc = agg.byDistrict.filter(d => d.assigned > 0 || d.mpp > 0);
             const distAllocMpp = activeDistAlloc.reduce((s, d) => s + d.mpp, 0);
             const distAllocOutbond = activeDistAlloc.reduce((s, d) => s + d.assigned, 0);
@@ -1133,7 +1128,7 @@
                 </tr>
             `;
 
-            // 5. Matrix District x Title (only non-zero rows, dynamic rowspan)
+            // 5. Matrix District x Title
             const matrixSumAssigned = agg.matrixByDistrict.reduce((s, g) => s + g.totalOutbond, 0);
             const matrixSumDelivered = agg.matrixByDistrict.reduce(
                 (s, g) => s + g.items.reduce((acc, it) => acc + it.delivered, 0), 0
@@ -1313,25 +1308,182 @@
         // =========================================================================
         function mapCourierMetaFromMaster(id, name) {
             const cleanId = String(id || '').trim();
-            const found = masterKurir.find(m => String(m.id).trim() === cleanId);
+            const cleanName = String(name || '').trim();
+            const foundById = cleanId
+                ? masterKurir.find(m => String(m.id).trim() === cleanId)
+                : null;
+            const foundByName = !foundById && cleanName
+                ? masterKurir.find(m => String(m.name).trim().toUpperCase() === cleanName.toUpperCase())
+                : null;
+            const found = foundById || foundByName;
+
             if (found) {
                 return {
-                    id: cleanId,
-                    name: name || found.name,
+                    id: cleanId || String(found.id).trim(),
+                    name: cleanName || found.name,
                     title: found.title,
                     zone: found.zone
                 };
             }
-            const upperName = String(name || '').toUpperCase();
+            const upperName = cleanName.toUpperCase();
             let zone = 'MARON';
             if (upperName.includes('KRUCIL')) zone = 'KRUCIL';
             else if (upperName.includes('TIRIS')) zone = 'TIRIS';
             return {
                 id: cleanId || '000000',
-                name: name || 'KURIR',
+                name: cleanName || 'KURIR',
                 title: 'Rider Dedicated',
                 zone
             };
+        }
+
+        /**
+         * Menormalisasi kunci objek baris agar pencocokan nama kolom lebih toleran.
+         */
+        function normalizeRowKeys(rowObj) {
+            const map = {};
+            if (!rowObj || typeof rowObj !== 'object') return map;
+            Object.keys(rowObj).forEach(k => {
+                const cleanKey = String(k || '')
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]/g, '');
+                if (cleanKey && !(cleanKey in map)) {
+                    map[cleanKey] = rowObj[k];
+                }
+            });
+            return map;
+        }
+
+        /**
+         * Mengambil nilai pertama yang tersedia berdasarkan daftar kemungkinan nama kolom.
+         */
+        function pickColumnValue(normRow, candidateKeys, fallback = '') {
+            for (const key of candidateKeys) {
+                const cleanKey = String(key || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (cleanKey in normRow) {
+                    const val = normRow[cleanKey];
+                    if (val !== undefined && val !== null && String(val).trim() !== '') {
+                        return val;
+                    }
+                }
+            }
+            return fallback;
+        }
+
+        /**
+         * Mengambil nilai pertama yang kuncinya mengandung salah satu token tertentu.
+         */
+        function pickColumnByFuzzyToken(normRow, fuzzyTokens, fallback = '') {
+            const keys = Object.keys(normRow);
+            for (const token of fuzzyTokens) {
+                const cleanToken = String(token || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (!cleanToken) continue;
+                const matchedKey = keys.find(k => k.includes(cleanToken));
+                if (matchedKey) {
+                    const val = normRow[matchedKey];
+                    if (val !== undefined && val !== null && String(val).trim() !== '') {
+                        return val;
+                    }
+                }
+            }
+            return fallback;
+        }
+
+        /**
+         * Mengambil teks ID atau nama kurir dari nilai sel/kolom pertama yang berupa teks non-angka.
+         */
+        function extractFallbackIdentity(rawRow, normRow) {
+            let id = '';
+            let name = '';
+
+            const values = rawRow && typeof rawRow === 'object' ? Object.values(rawRow) : Object.values(normRow);
+            for (const v of values) {
+                if (v === undefined || v === null) continue;
+                const s = String(v).trim();
+                if (!s) continue;
+                if (!id && /^\d{4,12}$/.test(s)) {
+                    id = s;
+                    continue;
+                }
+                if (!name && /[a-zA-Z]{2,}/.test(s) && !/^(final|follow\s*up|krucil|tiris|maron|rider|driver|mitra)/i.test(s)) {
+                    name = s;
+                }
+                if (id && name) break;
+            }
+            return { id, name };
+        }
+
+        /**
+         * Mengubah nilai angka (termasuk format string berkoma/spasi) menjadi number aman.
+         */
+        function parseNumericCell(val) {
+            if (typeof val === 'number') return Number.isFinite(val) ? val : 0;
+            const cleaned = String(val ?? '')
+                .replace(/,/g, '')
+                .replace(/[^0-9.-]/g, '')
+                .trim();
+            if (!cleaned || cleaned === '-' || cleaned === '.') return 0;
+            const num = Number(cleaned);
+            return Number.isFinite(num) ? num : 0;
+        }
+
+        /**
+         * Menemukan indeks baris header yang paling sesuai pada sheet mentah (array of arrays).
+         */
+        function detectHeaderRowIndex(aoa) {
+            const headerKeywords = [
+                'id', 'nama', 'name', 'driver', 'courier', 'fleet',
+                'assigned', 'delivering', 'delivered', 'onhold', 'zone', 'title'
+            ];
+            let bestRowIdx = 0;
+            let bestScore = -1;
+
+            const scanLimit = Math.min(aoa.length, 25);
+            for (let i = 0; i < scanLimit; i++) {
+                const row = Array.isArray(aoa[i]) ? aoa[i] : [];
+                let score = 0;
+                row.forEach(cell => {
+                    const token = String(cell || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                    if (!token) return;
+                    if (headerKeywords.includes(token)) {
+                        score += 3;
+                    } else if (headerKeywords.some(kw => token.includes(kw))) {
+                        score += 1;
+                    }
+                });
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestRowIdx = i;
+                }
+            }
+            return bestScore > 0 ? bestRowIdx : 0;
+        }
+
+        /**
+         * Mengonversi array of arrays (aoa) dari sheet Excel/CSV menjadi daftar objek baris.
+         */
+        function rowsFromAoa(aoa) {
+            if (!Array.isArray(aoa) || aoa.length === 0) return [];
+            const headerIdx = detectHeaderRowIndex(aoa);
+            const rawHeaders = (aoa[headerIdx] || []).map((h, idx) => {
+                const text = String(h ?? '').trim();
+                return text || `Column_${idx}`;
+            });
+
+            const result = [];
+            for (let r = headerIdx + 1; r < aoa.length; r++) {
+                const line = aoa[r];
+                if (!Array.isArray(line)) continue;
+                const hasAnyContent = line.some(cell => cell !== undefined && cell !== null && String(cell).trim() !== '');
+                if (!hasAnyContent) continue;
+
+                const obj = {};
+                rawHeaders.forEach((colName, cIdx) => {
+                    obj[colName] = line[cIdx] ?? '';
+                });
+                result.push(obj);
+            }
+            return result;
         }
 
         function handleFileUpload(event) {
@@ -1343,9 +1495,20 @@
                 try {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
-                    const firstSheetName = workbook.SheetNames[0];
-                    const sheet = workbook.Sheets[firstSheetName];
-                    const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+                    const preferredSheet = workbook.SheetNames.find(name => {
+                        const up = String(name).toUpperCase();
+                        return up.includes('DATA') || up.includes('FLEET') || up.includes('PROGRESS') || up.includes('COURIER');
+                    });
+                    const targetSheetName = preferredSheet || workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[targetSheetName];
+
+                    const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+                    let rows = rowsFromAoa(aoa);
+
+                    if (!Array.isArray(rows) || rows.length === 0) {
+                        rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+                    }
 
                     if (!Array.isArray(rows) || rows.length === 0) {
                         showToast('File kosong atau tidak terbaca.', '⚠️');
@@ -1353,23 +1516,82 @@
                     }
 
                     const parsedCouriers = rows.map(r => {
-                        let rawId = String(r.ID ?? r.id ?? r['Driver ID'] ?? '').trim();
-                        let rawName = String(r.Nama ?? r.nama ?? r.Name ?? r.name ?? '').trim();
+                        const norm = normalizeRowKeys(r);
+
+                        let rawId = String(pickColumnValue(norm, [
+                            'id', 'driverid', 'courierid', 'fleetid', 'userid', 'nik', 'kode'
+                        ], '') || pickColumnByFuzzyToken(norm, [
+                            'driverid', 'courierid', 'fleetid', 'userid', 'id'
+                        ], '')).trim();
+
+                        let rawName = String(pickColumnValue(norm, [
+                            'nama', 'name', 'drivername', 'couriername', 'fleetname',
+                            'driver', 'courier', 'fleet', 'kurir', 'personil', 'staff'
+                        ], '') || pickColumnByFuzzyToken(norm, [
+                            'nama', 'name', 'driver', 'courier', 'fleet', 'kurir'
+                        ], '')).trim();
+
+                        if (!rawId || !rawName) {
+                            const fb = extractFallbackIdentity(r, norm);
+                            if (!rawId && fb.id) rawId = fb.id;
+                            if (!rawName && fb.name) rawName = fb.name;
+                        }
 
                         const bracketMatch = rawName.match(/^\[(\d+)\]\s*(.+)$/);
-                        if (!rawId && bracketMatch) {
-                            rawId = bracketMatch[1];
+                        if (bracketMatch) {
+                            if (!rawId) rawId = bracketMatch[1];
                             rawName = bracketMatch[2].trim();
+                        } else if (!rawId) {
+                            const dashMatch = rawName.match(/^(\d{4,})\s*[-–:]\s*(.+)$/);
+                            if (dashMatch) {
+                                rawId = dashMatch[1];
+                                rawName = dashMatch[2].trim();
+                            }
+                        }
+
+                        const lowerName = rawName.toLowerCase();
+                        if (!rawId && (lowerName === 'total' || lowerName.startsWith('grand total') || lowerName.startsWith('subtotal'))) {
+                            return null;
                         }
 
                         const mapped = mapCourierMetaFromMaster(rawId, rawName);
-                        const title = String(r.TITLE ?? r.Title ?? r.title ?? mapped.title).trim() || mapped.title;
-                        const zone = String(r.Zone ?? r.zone ?? r.District ?? r.district ?? mapped.zone).trim().toUpperCase() || mapped.zone;
-                        const assigned = Number(r.Assigned ?? r.assigned ?? r.Target ?? 0) || 0;
-                        const delivering = Number(r.Delivering ?? r.delivering ?? 0) || 0;
-                        const delivered = Number(r.Delivered ?? r.delivered ?? 0) || 0;
-                        const onhold = Number(r.Onhold ?? r.onhold ?? r.Pending ?? 0) || 0;
-                        const desc = String(r.Description ?? r.description ?? r.Desc ?? (delivering > 0 ? 'FOLLOW UP' : 'FINAL')).trim().toUpperCase() || 'FINAL';
+
+                        const rawTitle = String(pickColumnValue(norm, [
+                            'title', 'role', 'jabatan', 'tipe', 'type', 'category', 'kategori'
+                        ], '')).trim();
+                        const title = rawTitle || mapped.title;
+
+                        const rawZone = String(pickColumnValue(norm, [
+                            'zone', 'district', 'area', 'kecamatan', 'wilayah', 'hub', 'station'
+                        ], '')).trim().toUpperCase();
+                        const zone = rawZone || mapped.zone;
+
+                        const assigned = parseNumericCell(pickColumnValue(norm, [
+                            'assigned', 'outbound', 'outbond', 'totaloutbound', 'totaloutbond',
+                            'target', 'order', 'totalorder', 'assign'
+                        ], 0));
+
+                        const delivering = parseNumericCell(pickColumnValue(norm, [
+                            'delivering', 'ondelivery', 'inprogress', 'intransit', 'proses'
+                        ], 0));
+
+                        const delivered = parseNumericCell(pickColumnValue(norm, [
+                            'delivered', 'success', 'sukses', 'complete', 'completed', 'done', 'terkirim'
+                        ], 0));
+
+                        const onhold = parseNumericCell(pickColumnValue(norm, [
+                            'onhold', 'hold', 'pending', 'failed', 'gagal', 'return', 'retur'
+                        ], 0));
+
+                        const rawDesc = String(pickColumnValue(norm, [
+                            'description', 'desc', 'status', 'keterangan', 'remarks', 'note'
+                        ], '')).trim().toUpperCase();
+
+                        const desc = rawDesc.includes('FOLLOW')
+                            ? 'FOLLOW UP'
+                            : (rawDesc.includes('FINAL')
+                                ? 'FINAL'
+                                : (delivering > 0 ? 'FOLLOW UP' : 'FINAL'));
 
                         return {
                             id: mapped.id,
@@ -1380,12 +1602,12 @@
                             delivering,
                             delivered,
                             onhold,
-                            desc: desc === 'FOLLOW UP' ? 'FOLLOW UP' : 'FINAL'
+                            desc
                         };
-                    }).filter(item => item.name || item.assigned > 0 || item.delivered > 0);
+                    }).filter(item => item && (item.name || item.assigned > 0 || item.delivered > 0 || item.delivering > 0 || item.onhold > 0));
 
                     if (parsedCouriers.length === 0) {
-                        showToast('Tidak ada data kurir valid pada file.', '⚠️');
+                        showToast('Tidak ada data kurir valid pada file. Periksa nama kolom file Anda.', '⚠️');
                         return;
                     }
 
@@ -1578,9 +1800,9 @@
             const hub = document.getElementById('hubNameInput').value || 'Maron Hub';
             const dt = document.getElementById('reportDateInput').value || '25-Nov-26';
             const topBrand = document.getElementById('topBrandLabel');
-            const bannerTitle = document.getElementById('bannerHubTitle');
+            const bannerSub = document.getElementById('bannerHubSubLabel');
             if (topBrand) topBrand.textContent = hub;
-            if (bannerTitle) bannerTitle.textContent = `Daily Monitoring Performance ${hub}`;
+            if (bannerSub) bannerSub.textContent = hub;
             document.getElementById('footerHubName').textContent = hub.toUpperCase();
             document.getElementById('displayReportDate').textContent = dt;
         }
@@ -1628,7 +1850,6 @@
         }
 
         function downloadReportPNG() {
-            // Pastikan tab dashboard aktif sebelum capture
             switchTab('dashboard');
             showToast("Sedang menyiapkan gambar PNG...", "📸");
 
