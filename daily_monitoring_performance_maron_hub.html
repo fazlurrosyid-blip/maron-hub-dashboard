@@ -1,0 +1,1859 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Monitoring Performance Maron Hub</title>
+    <!-- Favicon Tab Browser: otomatis ikut Logo Hub / fallback SVG -->
+    <link id="browserFavicon" rel="icon" type="image/png" href="Logo SPX Express Maroon Jatim V.png">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SheetJS untuk membaca & mengekspor Excel/CSV -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <!-- html2canvas untuk fitur Screenshot / Download PNG -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Google Fonts: Comic Neue / Patrick Hand / Inter untuk nuansa persis screenshot -->
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background-color: #0f172a;
+            margin: 0;
+            padding: 0;
+        }
+        .header-handwritten {
+            font-family: 'Comic Neue', 'Comic Sans MS', cursive, sans-serif;
+            letter-spacing: 0.5px;
+        }
+        /* Frame Excel-like persis screenshot */
+        .excel-frame {
+            background-color: #1f4e78;
+            border: 3px solid #163856;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .excel-table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 11.5px;
+            line-height: 1.25;
+        }
+        .excel-table th, .excel-table td {
+            border: 1px solid #a6a6a6;
+            padding: 2px 6px;
+            vertical-align: middle;
+        }
+        .excel-table-dark-header th {
+            background-color: #000000;
+            color: #ffffff;
+            font-weight: 700;
+            border-color: #404040;
+        }
+        /* Data bar inline styling */
+        .databar-cell {
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+            background-color: #e2e8f0;
+        }
+        .databar-fill {
+            position: absolute;
+            top: 1.5px;
+            bottom: 1.5px;
+            left: 1.5px;
+            z-index: 0;
+            border-radius: 2px;
+            transition: width 0.35s ease, background 0.35s ease;
+        }
+        .databar-label {
+            position: relative;
+            z-index: 2;
+            display: inline-block;
+            padding: 0 5px;
+            border-radius: 3px;
+            font-weight: 800;
+            letter-spacing: 0.1px;
+        }
+        /* Progress Pengiriman Tab (Screenshot 2) */
+        .progress-table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 11.5px;
+            background-color: #d9e1f2;
+        }
+        .progress-table th {
+            background-color: #0000ff;
+            color: #ffffff;
+            font-weight: 700;
+            border: 1px solid #8ea9db;
+            padding: 4px 6px;
+            white-space: nowrap;
+        }
+        .progress-table td {
+            border: 1px solid #8ea9db;
+            padding: 2px 6px;
+            color: #000000;
+            white-space: nowrap;
+        }
+        .progress-table tbody tr:hover td {
+            filter: brightness(0.95);
+        }
+        /* =========================================================
+           TEMPLATE 2: EXECUTIVE MODERN DASHBOARD (LEBIH MODERN & BERSIH)
+           ========================================================= */
+        .exec-theme .excel-frame {
+            background: linear-gradient(145deg, #0f172a 0%, #1e293b 55%, #0f172a 100%);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            border-radius: 18px;
+            box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.65);
+        }
+        .exec-theme .exec-banner {
+            background: linear-gradient(90deg, #0284c7 0%, #2563eb 50%, #0d9488 100%) !important;
+            border: 1px solid rgba(255, 255, 255, 0.18) !important;
+            border-radius: 12px !important;
+        }
+        .exec-theme .header-handwritten {
+            font-family: 'Inter', sans-serif !important;
+            font-weight: 800 !important;
+            letter-spacing: -0.02em !important;
+        }
+        .exec-theme .exec-panel {
+            background-color: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+            overflow: hidden;
+        }
+        .exec-theme .excel-table th,
+        .exec-theme .excel-table td {
+            border-color: #e2e8f0 !important;
+            padding: 5px 8px !important;
+            font-size: 12px !important;
+        }
+        .exec-theme .excel-table-dark-header th {
+            background: #0f172a !important;
+            color: #f8fafc !important;
+            border-color: #1e293b !important;
+            text-transform: uppercase;
+            font-size: 10.5px !important;
+            letter-spacing: 0.04em;
+        }
+        .exec-theme .databar-fill {
+            top: 3px !important;
+            bottom: 3px !important;
+            left: 3px !important;
+            border-radius: 6px !important;
+        }
+        .exec-theme .databar-label {
+            border-radius: 999px !important;
+            padding: 1px 7px !important;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-900 pb-10">
+
+    <!-- TOP CONTROL BAR (Tidak ikut ter-capture saat download PNG) -->
+    <div id="controlBar" class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-700 text-white px-4 py-3 shadow-lg">
+        <div class="max-w-[1440px] mx-auto flex flex-wrap items-center justify-between gap-3">
+            <!-- Brand & Tabs -->
+            <div class="flex flex-wrap items-center gap-3">
+                <div class="flex items-center gap-2 bg-red-950/70 border border-amber-500/40 px-3 py-1.5 rounded-lg">
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+                    <span id="topBrandLabel" class="font-bold text-sm tracking-wide text-amber-200">Maron Hub</span>
+                </div>
+
+                <!-- Tab Switcher -->
+                <div class="flex bg-slate-800 p-1 rounded-lg border border-slate-700">
+                    <button onclick="switchTab('dashboard')" id="tabBtnDashboard" class="px-3.5 py-1.5 rounded-md text-xs sm:text-sm font-semibold transition bg-blue-600 text-white shadow">
+                        1. Dashboard Report
+                    </button>
+                    <button onclick="switchTab('progress')" id="tabBtnProgress" class="px-3.5 py-1.5 rounded-md text-xs sm:text-sm font-semibold transition text-slate-300 hover:text-white">
+                        2. Progress Pengiriman (<span id="courierCountBadge">59</span>)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- Template Switcher (Select + Tombol Toggle Cepat) -->
+                <div class="flex items-center bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 gap-1.5 relative z-10">
+                    <span class="text-[11px] text-slate-400">Tema:</span>
+                    <select id="themeSelect" aria-label="Pilih Tema Dashboard" onchange="switchTheme(this.value)" class="bg-slate-900 border border-slate-600 rounded px-1.5 py-0.5 text-xs font-semibold text-sky-300 focus:outline-none focus:border-sky-400 cursor-pointer pointer-events-auto">
+                        <option value="classic" class="bg-slate-900 text-white">Classic Excel</option>
+                        <option value="executive" class="bg-slate-900 text-white">Executive Modern</option>
+                    </select>
+                    <button type="button" id="themeToggleBtn" onclick="toggleTheme()" title="Klik untuk beralih antara Classic Excel dan Executive Modern" class="bg-sky-600/30 hover:bg-sky-600/50 text-sky-200 border border-sky-400/40 rounded px-2 py-0.5 text-[11px] font-semibold transition cursor-pointer">
+                        Ganti Tema
+                    </button>
+                </div>
+
+                <!-- Hub Name Input -->
+                <div class="flex items-center bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1">
+                    <span class="text-[11px] text-slate-400 mr-1.5">Hub:</span>
+                    <input type="text" id="hubNameInput" value="Maron Hub" onchange="updateHeaderMeta()" class="bg-transparent text-xs font-semibold text-white w-24 focus:outline-none">
+                </div>
+
+                <!-- Date Input -->
+                <div class="flex items-center bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1">
+                    <span class="text-[11px] text-slate-400 mr-1.5">Date:</span>
+                    <input type="text" id="reportDateInput" value="25-Nov-26" onchange="updateHeaderMeta()" class="bg-transparent text-xs font-semibold text-white w-24 focus:outline-none">
+                </div>
+
+                <!-- Upload Excel/CSV -->
+                <label class="cursor-pointer bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow transition flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                    <span>Upload Excel / CSV</span>
+                    <input type="file" id="excelUploadInput" accept=".xlsx,.xls,.csv" class="hidden" onchange="handleFileUpload(event)">
+                </label>
+
+                <!-- Master Kurir Modal Trigger -->
+                <button onclick="openMasterModal()" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow transition flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <span>Master Kurir</span>
+                </button>
+
+                <!-- Upload Logo Lokal (Opsional untuk PNG offline) -->
+                <label title="Pilih file gambar Logo SPX Express Maroon Jatim V dari perangkat Anda" class="cursor-pointer bg-rose-800 hover:bg-rose-700 text-amber-100 border border-amber-400/30 text-xs font-semibold px-3 py-2 rounded-lg shadow transition flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <span>Logo Hub</span>
+                    <input type="file" id="logoUploadInput" accept="image/*" class="hidden" onchange="handleLogoUpload(event)">
+                </label>
+
+                <!-- Download Screenshot PNG -->
+                <button onclick="downloadReportPNG()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow transition flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <span>Download PNG</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toastBox" class="fixed bottom-5 right-5 z-50 hidden transform transition-all duration-300">
+        <div class="bg-slate-800 border border-slate-600 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 text-sm">
+            <span id="toastIcon" class="text-lg">✅</span>
+            <span id="toastMsg">Data berhasil dimuat!</span>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <div class="max-w-[1180px] mx-auto px-2 sm:px-4 mt-4">
+
+        <!-- ========================================================= -->
+        <!-- TAB 1: DASHBOARD REPORT (REPLIKASI PERSIS SCREENSHOT 1)   -->
+        <!-- ========================================================= -->
+        <div id="viewDashboard" class="block">
+            <div id="captureArea" class="excel-frame p-3 sm:p-4 select-none">
+                
+                <!-- BANNER HEADER + LOGO MARON HUB -->
+                <div class="exec-banner bg-[#44546a] text-white py-2 px-3 sm:px-4 border border-[#2f3b4c] shadow-sm flex flex-col sm:flex-row items-center justify-between gap-2">
+                    <div class="bg-white/95 px-2.5 py-1 rounded-lg shadow border border-amber-400/60 flex items-center justify-center shrink-0">
+                        <img id="hubLogoImg" src="Logo SPX Express Maroon Jatim V.png" alt="Logo SPX Express Maroon Jatim V" class="h-11 sm:h-14 w-auto object-contain" onerror="handleLogoError(this)">
+                    </div>
+                    <div class="flex flex-col items-center sm:items-end text-center sm:text-right shrink-0">
+                        <span class="text-[10px] uppercase tracking-widest text-amber-300 font-bold">Jatim V</span>
+                        <span id="bannerHubSubLabel" class="text-xs font-semibold text-white/90">Maron Hub</span>
+                    </div>
+                </div>
+
+                <!-- DATE SUB-HEADER -->
+                <div class="flex items-center justify-between text-white text-xs sm:text-sm font-bold py-1.5 px-1">
+                    <div class="flex items-center">
+                        <span class="w-24 sm:w-32 text-sky-200">Date</span>
+                        <span id="displayReportDate">25-Nov-26</span>
+                    </div>
+                    <span id="activeThemeBadge" class="text-[10px] uppercase tracking-wider bg-white/10 border border-white/15 px-2.5 py-0.5 rounded-full text-slate-200">
+                        Classic Excel View
+                    </span>
+                </div>
+
+                <!-- TOP KPI SUMMARY ROW (5 Cards + 1 Pie Chart) -->
+                <div id="kpiRowContainer" class="exec-panel grid grid-cols-2 sm:grid-cols-12 border border-[#7f7f7f] bg-white">
+                    <!-- 1. Total Outbond today -->
+                    <div class="col-span-1 sm:col-span-2 flex flex-col border-r border-b sm:border-b-0 border-[#7f7f7f]">
+                        <div class="bg-[#595959] text-white text-[11px] font-bold text-center py-1 px-1">Total Outbond today</div>
+                        <div id="kpiOutbond" class="bg-[#bfbfbf] text-black font-extrabold text-xl sm:text-2xl flex-1 flex items-center justify-center py-6 sm:py-8">
+                            7759
+                        </div>
+                    </div>
+
+                    <!-- 2. Total Delivered Order -->
+                    <div class="col-span-1 sm:col-span-2 flex flex-col border-r border-b sm:border-b-0 border-[#7f7f7f]">
+                        <div class="bg-[#595959] text-white text-[11px] font-bold text-center py-1 px-1">Total Delivered Order</div>
+                        <div id="kpiDelivered" class="bg-[#f2f2f2] text-black font-extrabold text-xl sm:text-2xl flex-1 flex items-center justify-center py-6 sm:py-8">
+                            7400
+                        </div>
+                    </div>
+
+                    <!-- 3. Delivering -->
+                    <div class="col-span-1 sm:col-span-1 flex flex-col border-r border-b sm:border-b-0 border-[#7f7f7f]">
+                        <div class="bg-[#595959] text-white text-[11px] font-bold text-center py-1 px-1">Delivering</div>
+                        <div id="kpiDelivering" class="bg-[#ffff00] text-black font-extrabold text-xl sm:text-2xl flex-1 flex items-center justify-center py-6 sm:py-8">
+                            42
+                        </div>
+                    </div>
+
+                    <!-- 4. Onhold -->
+                    <div class="col-span-1 sm:col-span-1 flex flex-col border-r border-b sm:border-b-0 border-[#7f7f7f]">
+                        <div class="bg-[#595959] text-white text-[11px] font-bold text-center py-1 px-1">Onhold</div>
+                        <div id="kpiOnhold" class="bg-[#c00000] text-white font-extrabold text-xl sm:text-2xl flex-1 flex items-center justify-center py-6 sm:py-8">
+                            317
+                        </div>
+                    </div>
+
+                    <!-- 5. Today Performance -->
+                    <div id="kpiPerformanceCard" class="col-span-2 sm:col-span-3 flex flex-col border-r border-b sm:border-b-0 border-[#7f7f7f] transition-colors duration-300">
+                        <div class="bg-[#595959] text-white text-[11px] font-bold text-center py-1 px-1">Today Performance</div>
+                        <div id="kpiPerformanceBox" class="bg-white text-black font-extrabold text-xl sm:text-2xl flex-1 flex flex-col items-center justify-center py-4 sm:py-5 px-3 relative overflow-hidden">
+                            <span id="kpiPerformance" class="relative z-10 px-3 py-0.5 rounded-md">95.37%</span>
+                            <div class="w-4/5 h-2 bg-slate-300/80 rounded-full overflow-hidden mt-2 border border-black/15 relative z-10">
+                                <div id="kpiPerformanceBar" class="h-full transition-all duration-500 rounded-full" style="width: 95.37%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 6. Chart Progress Delivery -->
+                    <div class="col-span-2 sm:col-span-3 bg-[#d9d9d9] flex flex-col items-center justify-between p-1.5">
+                        <div class="text-[11px] font-semibold text-[#404040] text-center">Chart Progress Delivery</div>
+                        <div id="pieChartContainer" class="w-full flex items-center justify-center my-0.5">
+                            <!-- SVG Pie Chart di-render oleh JS -->
+                        </div>
+                        <div class="flex items-center justify-center gap-2 text-[8.5px] text-[#333] font-medium">
+                            <span class="flex items-center gap-1"><span class="w-2 h-2 inline-block bg-[#82d616]"></span>Total Delivered Order</span>
+                            <span class="flex items-center gap-1"><span class="w-2 h-2 inline-block bg-[#ffff00]"></span>Delivering</span>
+                            <span class="flex items-center gap-1"><span class="w-2 h-2 inline-block bg-[#ff0000]"></span>Onhold</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MIDDLE 2x2 TABLES GRID -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 mt-3">
+                    
+                    <!-- LEFT COLUMN (7 cols) -->
+                    <div class="lg:col-span-7 flex flex-col gap-3">
+                        <!-- Table 1: Performance Courier by Title -->
+                        <div class="exec-panel bg-white border border-[#7f7f7f] overflow-x-auto">
+                            <div class="bg-[#000000] text-white text-xs font-bold px-2.5 py-1.5 border-b border-[#404040]">
+                                Performance Courier by Title
+                            </div>
+                            <table class="excel-table">
+                                <thead class="excel-table-dark-header">
+                                    <tr>
+                                        <th class="text-center w-36">Title</th>
+                                        <th class="text-center">Assigned</th>
+                                        <th class="text-center">Delivered</th>
+                                        <th class="text-center">Onhold</th>
+                                        <th class="text-center w-36">Performance</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tblPerfByTitle"></tbody>
+                            </table>
+                        </div>
+
+                        <!-- Table 3: Performance Courier by District -->
+                        <div class="exec-panel bg-white border border-[#7f7f7f] overflow-x-auto">
+                            <div class="bg-[#000000] text-white text-xs font-bold px-2.5 py-1.5 border-b border-[#404040]">
+                                Performance Courier by District
+                            </div>
+                            <table class="excel-table">
+                                <thead class="excel-table-dark-header">
+                                    <tr>
+                                        <th class="text-center w-36">District</th>
+                                        <th class="text-center">Assigned</th>
+                                        <th class="text-center">Delivered</th>
+                                        <th class="text-center">Onhold</th>
+                                        <th class="text-center w-36">Performance</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tblPerfByDistrict"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT COLUMN (5 cols) -->
+                    <div class="lg:col-span-5 flex flex-col gap-3">
+                        <!-- Table 2: Outbound Allocation -->
+                        <div class="exec-panel bg-white border border-[#7f7f7f] overflow-x-auto">
+                            <div class="bg-[#000000] text-white text-xs font-bold px-2.5 py-1.5 border-b border-[#404040]">
+                                Outbound Allocation
+                            </div>
+                            <table class="excel-table">
+                                <thead class="excel-table-dark-header">
+                                    <tr>
+                                        <th class="text-center">Courier</th>
+                                        <th class="text-center">MPP</th>
+                                        <th class="text-center">Delivered</th>
+                                        <th class="text-center">Productivity</th>
+                                        <th class="text-center">Percentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tblOutboundAlloc"></tbody>
+                            </table>
+                        </div>
+
+                        <!-- Table 4: Outbound Allocation by District -->
+                        <div class="exec-panel bg-white border border-[#7f7f7f] overflow-x-auto">
+                            <div class="bg-[#000000] text-white text-xs font-bold px-2.5 py-1.5 border-b border-[#404040]">
+                                Outbound Allocation by District
+                            </div>
+                            <table class="excel-table">
+                                <thead class="excel-table-dark-header">
+                                    <tr>
+                                        <th class="text-center">District</th>
+                                        <th class="text-center">MPP</th>
+                                        <th class="text-center">Outbond</th>
+                                        <th class="text-center">Percentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tblOutboundDistrict"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FULL-WIDTH SECTION: Performance Courier by Title by District & Alocation -->
+                <div class="exec-panel mt-3 bg-white border border-[#7f7f7f] overflow-x-auto">
+                    <div class="bg-[#000000] text-white text-base sm:text-lg font-bold text-center py-1.5 border-b border-[#404040]">
+                        Performance Courier by Title by District &amp; Alocation
+                    </div>
+                    <table class="excel-table">
+                        <thead class="excel-table-dark-header">
+                            <tr>
+                                <th class="text-center w-32">District</th>
+                                <th class="text-center w-44">Title</th>
+                                <th class="text-center">Assigned</th>
+                                <th class="text-center">Delivered</th>
+                                <th class="text-center">Onhold</th>
+                                <th class="text-center w-44">Performance</th>
+                                <th class="text-center w-14">MPP</th>
+                                <th class="text-center w-24">Total Outbond</th>
+                                <th class="text-center w-28">Percentage<br>Alocation</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tblMatrixDistrictTitle"></tbody>
+                    </table>
+                </div>
+
+                <!-- FOOTER ROW -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 mt-3 items-stretch">
+                    <!-- Left Motto Box -->
+                    <div class="exec-panel lg:col-span-7 bg-[#d9d9d9] border border-[#7f7f7f] flex flex-col">
+                        <div class="bg-[#808080] h-3.5 border-b border-[#7f7f7f]"></div>
+                        <div class="flex-1 flex flex-col sm:flex-row items-center justify-center gap-3 py-2.5 px-3 text-center sm:text-left">
+                            <div class="bg-white/95 px-2 py-1 rounded-md border border-slate-400 shadow-sm shrink-0">
+                                <img id="footerHubLogoImg" src="Logo SPX Express Maroon Jatim V.png" alt="Logo Maron Hub" class="h-10 w-auto object-contain" onerror="handleLogoError(this)">
+                            </div>
+                            <div class="flex-1">
+                                <div id="footerHubName" class="font-extrabold text-sm text-black uppercase">MARON HUB</div>
+                                <input type="text" id="footerTaglineInput" value="SPX yang keras atau anda yang lemah?" class="bg-transparent text-center sm:text-left text-xs font-bold text-black w-full focus:outline-none focus:bg-white/50 rounded px-1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Rider vs Driver Summary -->
+                    <div class="exec-panel lg:col-span-5 bg-white border border-[#7f7f7f] overflow-x-auto">
+                        <table class="excel-table">
+                            <thead>
+                                <tr class="bg-[#808080] text-white font-bold">
+                                    <th class="text-center">Type of Courier</th>
+                                    <th class="text-center w-36">Outbond</th>
+                                    <th class="text-center w-24">Alocation</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tblRiderDriverSummary"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- TAB 2: PROGRESS PENGIRIMAN (REPLIKASI PERSIS SCREENSHOT 2)-->
+        <!-- ========================================================= -->
+        <div id="viewProgress" class="hidden">
+            <div class="bg-[#1f4e78] p-3 sm:p-4 rounded-xl border-2 border-[#163856] shadow-2xl">
+                <!-- Filter & Search Bar -->
+                <div class="bg-slate-900/90 text-white p-3 rounded-lg mb-3 flex flex-wrap items-center justify-between gap-3 border border-slate-700">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <input type="text" id="searchCourierInput" onkeyup="renderProgressTable()" placeholder="Cari ID atau Nama Kurir..." class="bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-blue-400 w-52">
+                        
+                        <select id="filterZoneSelect" onchange="renderProgressTable()" class="bg-slate-800 border border-slate-600 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none">
+                            <option value="ALL">Semua Zone (District)</option>
+                            <option value="KRUCIL">KRUCIL</option>
+                            <option value="TIRIS">TIRIS</option>
+                            <option value="MARON">MARON</option>
+                        </select>
+
+                        <select id="filterTitleSelect" onchange="renderProgressTable()" class="bg-slate-800 border border-slate-600 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none">
+                            <option value="ALL">Semua Title</option>
+                            <option value="Rider Dedicated">Rider Dedicated</option>
+                            <option value="Mitra Plus">Mitra Plus</option>
+                            <option value="Rider Mitra">Rider Mitra</option>
+                            <option value="Driver Dedicated">Driver Dedicated</option>
+                            <option value="Driver Mitra">Driver Mitra</option>
+                        </select>
+
+                        <select id="filterStatusSelect" onchange="renderProgressTable()" class="bg-slate-800 border border-slate-600 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none">
+                            <option value="ALL">Semua Status</option>
+                            <option value="FINAL">FINAL</option>
+                            <option value="FOLLOW UP">FOLLOW UP</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button onclick="addNewCourierRow()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
+                            + Tambah Baris Kurir
+                        </button>
+                        <button onclick="exportCurrentExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
+                            Export Excel (.xlsx)
+                        </button>
+                    </div>
+
+                    <!-- Visual Legend Skala Gelap -> Terang 100% -->
+                    <div class="w-full pt-2 border-t border-slate-700/80 flex flex-wrap items-center gap-1.5 text-[10.5px]">
+                        <span class="text-slate-300 font-semibold mr-1">Skala Performance (Gelap &rarr; Terang 100%):</span>
+                        <span class="px-2 py-0.5 rounded font-bold text-white" style="background:#580c1f;">&lt;50%</span>
+                        <span class="px-2 py-0.5 rounded font-bold text-white" style="background:#7c2d12;">50-69%</span>
+                        <span class="px-2 py-0.5 rounded font-bold text-white" style="background:#3f6212;">70-79%</span>
+                        <span class="px-2 py-0.5 rounded font-bold text-white" style="background:#14532d;">80-89%</span>
+                        <span class="px-2 py-0.5 rounded font-bold text-white" style="background:#15803d;">90-94%</span>
+                        <span class="px-2 py-0.5 rounded font-bold text-white" style="background:#16a34a;">95-98%</span>
+                        <span class="px-2 py-0.5 rounded font-bold text-[#052e16]" style="background:#22c55e;">99%</span>
+                        <span class="px-2.5 py-0.5 rounded font-extrabold text-[#022c22] ring-1 ring-emerald-200" style="background:linear-gradient(90deg,#4ade80,#86efac);">100.00% (Terang)</span>
+                    </div>
+                </div>
+
+                <!-- Excel-style Courier Progress Table -->
+                <div class="overflow-x-auto bg-white border border-[#8ea9db] max-h-[75vh]">
+                    <table class="progress-table">
+                        <thead class="sticky top-0 z-10">
+                            <tr>
+                                <th class="text-center w-24">ID</th>
+                                <th class="text-left min-w-[190px]">Nama</th>
+                                <th class="text-center w-32">TITLE</th>
+                                <th class="text-center w-24">Zone</th>
+                                <th class="text-center w-20">Assigned</th>
+                                <th class="text-center w-20">Delivering</th>
+                                <th class="text-center w-28">Delivered</th>
+                                <th class="text-center w-24">Onhold</th>
+                                <th class="text-center w-24">Performance</th>
+                                <th class="text-center w-28">Description</th>
+                                <th class="text-center w-12">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="progressTableBody"></tbody>
+                    </table>
+                </div>
+                <div class="mt-2 text-[11px] text-blue-100 flex flex-wrap justify-between items-center">
+                    <span>* Klik langsung pada angka <b>Assigned</b>, <b>Delivering</b>, <b>Delivered</b>, atau <b>Onhold</b> untuk mengedit cepat (Dashboard otomatis ter-update).</span>
+                    <span id="progressSummaryFooter" class="font-semibold">Menampilkan 59 kurir</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- MODAL: MASTER KURIR (ZONE / TITLE MAPPING)                -->
+    <!-- ========================================================= -->
+    <div id="masterKurirModal" class="fixed inset-0 z-50 hidden bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 text-white rounded-2xl max-w-4xl w-full max-h-[88vh] flex flex-col shadow-2xl">
+            <div class="p-4 border-b border-slate-700 flex items-center justify-between">
+                <div>
+                    <h2 class="text-base sm:text-lg font-bold text-white">Master Kurir (Mapping ID &rarr; District &amp; Title)</h2>
+                    <p class="text-xs text-slate-400">Digunakan otomatis saat Anda upload file mentah SPX yang hanya berisi format <code>[ID] NAMA</code> tanpa kolom Zone/Title.</p>
+                </div>
+                <button onclick="closeMasterModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg bg-slate-800">✕</button>
+            </div>
+
+            <div class="p-3 bg-slate-800/60 border-b border-slate-700 flex flex-wrap items-center justify-between gap-2">
+                <input type="text" id="searchMasterInput" onkeyup="renderMasterTable()" placeholder="Cari ID / Nama di Master..." class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-1.5 text-xs text-white w-56">
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="addMasterRow()" class="bg-blue-600 hover:bg-blue-500 text-xs font-semibold px-3 py-1.5 rounded-lg">+ Tambah Kurir</button>
+                    <button onclick="resetMasterToDefault()" class="bg-slate-700 hover:bg-slate-600 text-xs font-semibold px-3 py-1.5 rounded-lg">Reset Default</button>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-3">
+                <table class="w-full text-xs text-left border-collapse">
+                    <thead class="bg-slate-800 text-slate-300 sticky top-0">
+                        <tr>
+                            <th class="p-2 border border-slate-700">Driver ID</th>
+                            <th class="p-2 border border-slate-700">Nama Kurir</th>
+                            <th class="p-2 border border-slate-700">Title / Role</th>
+                            <th class="p-2 border border-slate-700">Zone / District</th>
+                            <th class="p-2 border border-slate-700 text-center">Hapus</th>
+                        </tr>
+                    </thead>
+                    <tbody id="masterTableBody"></tbody>
+                </table>
+            </div>
+
+            <div class="p-3 border-t border-slate-700 flex justify-end gap-2 bg-slate-900 rounded-b-2xl">
+                <button onclick="saveMasterAndClose()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-lg shadow">
+                    Simpan &amp; Terapkan ke Data
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =========================================================================
+        // 1. CONSTANTS, PERFORMANCE COLOR SCALE (DARK -> BRIGHT 100%) & DEFAULT DATA
+        // =========================================================================
+        const DISTRICTS = ['KRUCIL', 'TIRIS', 'MARON'];
+        const TITLES = [
+            'Rider Dedicated',
+            'Mitra Plus',
+            'Rider Mitra',
+            'Driver Dedicated',
+            'Driver Mitra'
+        ];
+
+        const DEFAULT_COURIER_DATA = [
+            // TIRIS (19 kurir)
+            { id: '559336', name: 'WAHYU ARGA DINATA', title: 'Rider Dedicated', zone: 'TIRIS', assigned: 127, delivering: 0, delivered: 127, onhold: 0, desc: 'FINAL' },
+            { id: '592876', name: 'MOHAMMAD ISHAQ', title: 'Rider Dedicated', zone: 'TIRIS', assigned: 189, delivering: 0, delivered: 189, onhold: 0, desc: 'FINAL' },
+            { id: '736882', name: 'JUNAIDI', title: 'Rider Dedicated', zone: 'TIRIS', assigned: 116, delivering: 0, delivered: 113, onhold: 3, desc: 'FINAL' },
+            { id: '812198', name: 'KANZUL FIKRI', title: 'Rider Dedicated', zone: 'TIRIS', assigned: 171, delivering: 0, delivered: 171, onhold: 0, desc: 'FINAL' },
+            { id: '834937', name: 'MOH. ZAINAL ARIFIN', title: 'Rider Dedicated', zone: 'TIRIS', assigned: 174, delivering: 0, delivered: 164, onhold: 10, desc: 'FINAL' },
+            { id: '838105', name: 'HASAN SAIFUL ASRI', title: 'Rider Dedicated', zone: 'TIRIS', assigned: 162, delivering: 0, delivered: 148, onhold: 14, desc: 'FINAL' },
+            { id: '858286', name: 'AHMAD RONI', title: 'Rider Dedicated', zone: 'TIRIS', assigned: 151, delivering: 0, delivered: 151, onhold: 0, desc: 'FINAL' },
+            { id: '902181', name: 'JAILANI ABDILLAH', title: 'Rider Dedicated', zone: 'TIRIS', assigned: 144, delivering: 0, delivered: 138, onhold: 6, desc: 'FINAL' },
+            { id: '910761', name: 'KHAIRUL ANAM', title: 'Rider Dedicated', zone: 'TIRIS', assigned: 173, delivering: 0, delivered: 172, onhold: 1, desc: 'FINAL' },
+            { id: '1050960', name: 'ABDUL ALIM', title: 'Mitra Plus', zone: 'TIRIS', assigned: 128, delivering: 0, delivered: 128, onhold: 0, desc: 'FINAL' },
+            { id: '1080095', name: 'RIKI FASRIANDI', title: 'Mitra Plus', zone: 'TIRIS', assigned: 124, delivering: 0, delivered: 122, onhold: 2, desc: 'FINAL' },
+            { id: '1117097', name: "ROHIDISA'DI", title: 'Rider Mitra', zone: 'TIRIS', assigned: 98, delivering: 0, delivered: 96, onhold: 2, desc: 'FINAL' },
+            { id: '1283344', name: 'BURHANUDDIN', title: 'Driver Mitra', zone: 'TIRIS', assigned: 37, delivering: 0, delivered: 37, onhold: 0, desc: 'FINAL' },
+            { id: '1325841', name: 'FATHUL MUIN', title: 'Rider Dedicated', zone: 'TIRIS', assigned: 219, delivering: 0, delivered: 204, onhold: 15, desc: 'FINAL' },
+            { id: '1364070', name: 'MOH IMRON', title: 'Mitra Plus', zone: 'TIRIS', assigned: 98, delivering: 0, delivered: 98, onhold: 0, desc: 'FINAL' },
+            { id: '1367050', name: 'FAISAL FIRDAUS', title: 'Mitra Plus', zone: 'TIRIS', assigned: 83, delivering: 0, delivered: 77, onhold: 6, desc: 'FINAL' },
+            { id: '1372966', name: 'DWI AGUSTIAN', title: 'Rider Mitra', zone: 'TIRIS', assigned: 73, delivering: 0, delivered: 64, onhold: 9, desc: 'FINAL' },
+            { id: '596519', name: 'SHOLEHUDDIN', title: 'Rider Dedicated', zone: 'TIRIS', assigned: 116, delivering: 1, delivered: 113, onhold: 2, desc: 'FOLLOW UP' },
+            { id: '1054041', name: 'FAISOL HAMAMBI', title: 'Driver Dedicated', zone: 'TIRIS', assigned: 49, delivering: 41, delivered: 8, onhold: 0, desc: 'FOLLOW UP' },
+
+            // MARON (25 kurir)
+            { id: '363357', name: 'ALIHUR ROZIM', title: 'Rider Dedicated', zone: 'MARON', assigned: 140, delivering: 0, delivered: 140, onhold: 0, desc: 'FINAL' },
+            { id: '386724', name: 'HERMANTO', title: 'Rider Dedicated', zone: 'MARON', assigned: 119, delivering: 0, delivered: 119, onhold: 0, desc: 'FINAL' },
+            { id: '493495', name: 'M. SHOLIHIN', title: 'Rider Dedicated', zone: 'MARON', assigned: 127, delivering: 0, delivered: 127, onhold: 0, desc: 'FINAL' },
+            { id: '552828', name: 'RIYAN HIDAYAT', title: 'Rider Dedicated', zone: 'MARON', assigned: 153, delivering: 0, delivered: 153, onhold: 0, desc: 'FINAL' },
+            { id: '598881', name: 'HUSEN', title: 'Rider Dedicated', zone: 'MARON', assigned: 204, delivering: 0, delivered: 204, onhold: 0, desc: 'FINAL' },
+            { id: '606314', name: 'IMRON ABDUL AZIZ', title: 'Rider Dedicated', zone: 'MARON', assigned: 180, delivering: 0, delivered: 180, onhold: 0, desc: 'FINAL' },
+            { id: '656641', name: 'MUHAMMAD FIANSAH', title: 'Rider Dedicated', zone: 'MARON', assigned: 143, delivering: 0, delivered: 142, onhold: 1, desc: 'FINAL' },
+            { id: '679688', name: 'NOREGA SATRIA WIBOWO', title: 'Rider Dedicated', zone: 'MARON', assigned: 129, delivering: 0, delivered: 125, onhold: 4, desc: 'FINAL' },
+            { id: '702339', name: 'RAHMAD AL FARIZI', title: 'Rider Dedicated', zone: 'MARON', assigned: 187, delivering: 0, delivered: 187, onhold: 0, desc: 'FINAL' },
+            { id: '736813', name: 'KHOIRUT TAMAM', title: 'Rider Dedicated', zone: 'MARON', assigned: 176, delivering: 0, delivered: 176, onhold: 0, desc: 'FINAL' },
+            { id: '829634', name: 'MAULANA ISHAQ', title: 'Rider Dedicated', zone: 'MARON', assigned: 147, delivering: 0, delivered: 147, onhold: 0, desc: 'FINAL' },
+            { id: '841006', name: 'M EKO RIZKI', title: 'Rider Dedicated', zone: 'MARON', assigned: 138, delivering: 0, delivered: 138, onhold: 0, desc: 'FINAL' },
+            { id: '942936', name: 'WAHYU ANGGONO', title: 'Driver Mitra', zone: 'MARON', assigned: 65, delivering: 0, delivered: 65, onhold: 0, desc: 'FINAL' },
+            { id: '958393', name: 'ILZEM', title: 'Driver Mitra', zone: 'MARON', assigned: 10, delivering: 0, delivered: 10, onhold: 0, desc: 'FINAL' },
+            { id: '983152', name: 'NAWAWI', title: 'Driver Mitra', zone: 'MARON', assigned: 30, delivering: 0, delivered: 30, onhold: 0, desc: 'FINAL' },
+            { id: '1036888', name: 'M. SYAHRULLOH', title: 'Mitra Plus', zone: 'MARON', assigned: 165, delivering: 0, delivered: 165, onhold: 0, desc: 'FINAL' },
+            { id: '1041055', name: 'ABDUL WAFI', title: 'Mitra Plus', zone: 'MARON', assigned: 141, delivering: 0, delivered: 141, onhold: 0, desc: 'FINAL' },
+            { id: '1044770', name: 'MOH. ALI AKBAR', title: 'Mitra Plus', zone: 'MARON', assigned: 115, delivering: 0, delivered: 115, onhold: 0, desc: 'FINAL' },
+            { id: '1046755', name: 'ABDUL HAKIM', title: 'Mitra Plus', zone: 'MARON', assigned: 117, delivering: 0, delivered: 116, onhold: 1, desc: 'FINAL' },
+            { id: '1049615', name: 'ABD WARAS', title: 'Mitra Plus', zone: 'MARON', assigned: 99, delivering: 0, delivered: 99, onhold: 0, desc: 'FINAL' },
+            { id: '1074600', name: 'NIZAR ZULMI', title: 'Mitra Plus', zone: 'MARON', assigned: 122, delivering: 0, delivered: 122, onhold: 0, desc: 'FINAL' },
+            { id: '1078097', name: 'MUHAMMAD HILALUL FITRAH', title: 'Mitra Plus', zone: 'MARON', assigned: 126, delivering: 0, delivered: 124, onhold: 2, desc: 'FINAL' },
+            { id: '1085385', name: 'RONI WIJAYA', title: 'Mitra Plus', zone: 'MARON', assigned: 98, delivering: 0, delivered: 97, onhold: 1, desc: 'FINAL' },
+            { id: '1090394', name: 'MOH ANGGA DIANPRATAMA', title: 'Mitra Plus', zone: 'MARON', assigned: 135, delivering: 0, delivered: 135, onhold: 0, desc: 'FINAL' },
+            { id: '1127545', name: 'ABD HAMID MANSUR', title: 'Driver Mitra', zone: 'MARON', assigned: 10, delivering: 0, delivered: 10, onhold: 0, desc: 'FINAL' },
+
+            // KRUCIL (15 kurir)
+            { id: '540295', name: 'MOHAMMAD ALFAN FATONI', title: 'Rider Dedicated', zone: 'KRUCIL', assigned: 180, delivering: 0, delivered: 179, onhold: 1, desc: 'FINAL' },
+            { id: '611528', name: 'NANANG KOSIM', title: 'Rider Dedicated', zone: 'KRUCIL', assigned: 141, delivering: 0, delivered: 134, onhold: 7, desc: 'FINAL' },
+            { id: '617201', name: 'KHOIRUL ANAM', title: 'Rider Dedicated', zone: 'KRUCIL', assigned: 172, delivering: 0, delivered: 163, onhold: 9, desc: 'FINAL' },
+            { id: '659043', name: 'AGUS ARI SETIAWAN', title: 'Rider Dedicated', zone: 'KRUCIL', assigned: 167, delivering: 0, delivered: 167, onhold: 0, desc: 'FINAL' },
+            { id: '726092', name: 'DIMAS ARIFIN', title: 'Rider Dedicated', zone: 'KRUCIL', assigned: 205, delivering: 0, delivered: 204, onhold: 1, desc: 'FINAL' },
+            { id: '738931', name: 'RIGA AGUSTIN', title: 'Rider Dedicated', zone: 'KRUCIL', assigned: 190, delivering: 0, delivered: 171, onhold: 19, desc: 'FINAL' },
+            { id: '766398', name: 'CHANDRA PRAYOGI', title: 'Rider Dedicated', zone: 'KRUCIL', assigned: 223, delivering: 0, delivered: 196, onhold: 27, desc: 'FINAL' },
+            { id: '829649', name: 'AHMAD SALIM', title: 'Rider Dedicated', zone: 'KRUCIL', assigned: 253, delivering: 0, delivered: 225, onhold: 28, desc: 'FINAL' },
+            { id: '886150', name: 'INSAN ABDULLAH', title: 'Rider Dedicated', zone: 'KRUCIL', assigned: 162, delivering: 0, delivered: 153, onhold: 9, desc: 'FINAL' },
+            { id: '1231045', name: 'ABDUL QODIR', title: 'Mitra Plus', zone: 'KRUCIL', assigned: 168, delivering: 0, delivered: 133, onhold: 35, desc: 'FINAL' },
+            { id: '1274265', name: 'MOHAMMAD YENDRI', title: 'Mitra Plus', zone: 'KRUCIL', assigned: 97, delivering: 0, delivered: 84, onhold: 13, desc: 'FINAL' },
+            { id: '1356387', name: 'SEPTIAN HOFIFI ALAM', title: 'Mitra Plus', zone: 'KRUCIL', assigned: 165, delivering: 0, delivered: 146, onhold: 19, desc: 'FINAL' },
+            { id: '1409409', name: 'M. YUNUS', title: 'Rider Mitra', zone: 'KRUCIL', assigned: 101, delivering: 0, delivered: 94, onhold: 7, desc: 'FINAL' },
+            { id: '1417577', name: 'ABDUL WAHID HASYIM', title: 'Rider Mitra', zone: 'KRUCIL', assigned: 46, delivering: 0, delivered: 45, onhold: 1, desc: 'FINAL' },
+            { id: '1418990', name: 'HAKKULLAH FIRDAUS', title: 'Rider Mitra', zone: 'KRUCIL', assigned: 121, delivering: 0, delivered: 59, onhold: 62, desc: 'FINAL' }
+        ];
+
+        let courierData = JSON.parse(JSON.stringify(DEFAULT_COURIER_DATA));
+        let masterKurir = [];
+
+        /**
+         * Memuat master kurir dari localStorage atau membentuknya dari data default.
+         */
+        function initMasterKurir() {
+            try {
+                const raw = localStorage.getItem('maron_hub_master_kurir_v1');
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        masterKurir = parsed;
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.warn('Gagal membaca master kurir dari localStorage:', e);
+            }
+            masterKurir = DEFAULT_COURIER_DATA.map(c => ({
+                id: String(c.id),
+                name: String(c.name),
+                title: String(c.title),
+                zone: String(c.zone)
+            }));
+        }
+
+        function persistMasterKurir() {
+            try {
+                localStorage.setItem('maron_hub_master_kurir_v1', JSON.stringify(masterKurir));
+            } catch (e) {
+                console.warn('Gagal menyimpan master kurir ke localStorage:', e);
+            }
+        }
+
+        function formatNum(n) {
+            return Number(n || 0).toLocaleString('en-US');
+        }
+
+        function formatPct(pct) {
+            const val = Number.isFinite(pct) ? pct : 0;
+            return `${val.toFixed(2)}%`;
+        }
+
+        /**
+         * Menghasilkan gaya warna progresif dari gelap (0%) hingga terang menyala (100%).
+         */
+        function getPerformanceStyle(pct) {
+            const clamped = Math.max(0, Math.min(100, Number.isFinite(pct) ? pct : 0));
+
+            if (clamped >= 99.995) {
+                return {
+                    barBg: 'linear-gradient(90deg, #4ade80 0%, #86efac 65%, #bbf7d0 100%)',
+                    textColor: '#022c22',
+                    badgeBg: 'rgba(187, 247, 208, 0.95)',
+                    glow: '0 0 8px rgba(74, 222, 128, 0.75)'
+                };
+            }
+            if (clamped >= 99) {
+                return {
+                    barBg: 'linear-gradient(90deg, #22c55e 0%, #4ade80 100%)',
+                    textColor: '#052e16',
+                    badgeBg: 'rgba(220, 252, 231, 0.85)',
+                    glow: 'none'
+                };
+            }
+            if (clamped >= 95) {
+                return {
+                    barBg: 'linear-gradient(90deg, #15803d 0%, #16a34a 100%)',
+                    textColor: '#ffffff',
+                    badgeBg: 'rgba(5, 46, 22, 0.35)',
+                    glow: 'none'
+                };
+            }
+            if (clamped >= 90) {
+                return {
+                    barBg: 'linear-gradient(90deg, #14532d 0%, #15803d 100%)',
+                    textColor: '#ffffff',
+                    badgeBg: 'rgba(5, 46, 22, 0.45)',
+                    glow: 'none'
+                };
+            }
+            if (clamped >= 80) {
+                return {
+                    barBg: 'linear-gradient(90deg, #052e16 0%, #14532d 100%)',
+                    textColor: '#ecfdf5',
+                    badgeBg: 'rgba(2, 44, 34, 0.55)',
+                    glow: 'none'
+                };
+            }
+            if (clamped >= 70) {
+                return {
+                    barBg: 'linear-gradient(90deg, #365314 0%, #3f6212 100%)',
+                    textColor: '#f7fee7',
+                    badgeBg: 'rgba(26, 46, 5, 0.55)',
+                    glow: 'none'
+                };
+            }
+            if (clamped >= 50) {
+                return {
+                    barBg: 'linear-gradient(90deg, #431407 0%, #7c2d12 100%)',
+                    textColor: '#fff7ed',
+                    badgeBg: 'rgba(67, 20, 7, 0.55)',
+                    glow: 'none'
+                };
+            }
+            return {
+                barBg: 'linear-gradient(90deg, #3b0712 0%, #580c1f 100%)',
+                textColor: '#fff1f2',
+                badgeBg: 'rgba(59, 7, 18, 0.6)',
+                glow: 'none'
+            };
+        }
+
+        /**
+         * Merender sel persentase dengan data-bar dan teks kontras.
+         */
+        function renderPerformanceCell(pct, extraClass = '') {
+            const safePct = Math.max(0, Math.min(100, Number.isFinite(pct) ? pct : 0));
+            const st = getPerformanceStyle(safePct);
+            const widthPct = safePct > 0 ? Math.max(4, safePct) : 0;
+
+            return `
+                <td class="databar-cell text-center font-extrabold ${extraClass}" style="height: 22px;">
+                    <div class="databar-fill" style="width: ${widthPct.toFixed(2)}%; background: ${st.barBg}; box-shadow: ${st.glow};"></div>
+                    <span class="databar-label" style="color: ${st.textColor}; background: ${st.badgeBg};">
+                        ${formatPct(safePct)}
+                    </span>
+                </td>
+            `;
+        }
+
+        /**
+         * Merender bar alokasi bertingkat gelap -> terang.
+         */
+        function renderAllocationCell(pct, mode = 'amber') {
+            const safePct = Math.max(0, Math.min(100, Number.isFinite(pct) ? pct : 0));
+            const widthPct = safePct > 0 ? Math.max(5, safePct) : 0;
+
+            let barStyle = 'linear-gradient(90deg, #92400e 0%, #f59e0b 65%, #fde047 100%)';
+            let textColor = safePct >= 85 ? '#1c1917' : '#0f172a';
+            let badgeBg = 'rgba(255, 255, 255, 0.72)';
+
+            if (mode === 'blue') {
+                barStyle = 'linear-gradient(90deg, #1e3a8a 0%, #2563eb 65%, #93c5fd 100%)';
+                textColor = '#0f172a';
+                badgeBg = 'rgba(255, 255, 255, 0.78)';
+            } else if (mode === 'red') {
+                barStyle = 'linear-gradient(90deg, #7f1d1d 0%, #dc2626 70%, #f87171 100%)';
+                textColor = '#ffffff';
+                badgeBg = 'rgba(127, 29, 29, 0.35)';
+            }
+
+            return `
+                <td class="databar-cell text-center font-extrabold" style="height: 22px;">
+                    <div class="databar-fill" style="width: ${widthPct.toFixed(2)}%; background: ${barStyle};"></div>
+                    <span class="databar-label" style="color: ${textColor}; background: ${badgeBg};">
+                        ${formatPct(safePct)}
+                    </span>
+                </td>
+            `;
+        }
+
+        // =========================================================================
+        // 2. DATA AGGREGATION ENGINE
+        // =========================================================================
+        function computeAggregations(rows) {
+            const totalAssigned = rows.reduce((s, r) => s + (Number(r.assigned) || 0), 0);
+            const totalDelivering = rows.reduce((s, r) => s + (Number(r.delivering) || 0), 0);
+            const totalDelivered = rows.reduce((s, r) => s + (Number(r.delivered) || 0), 0);
+            const totalOnhold = rows.reduce((s, r) => s + (Number(r.onhold) || 0), 0);
+            const todayPerformance = totalAssigned > 0 ? (totalDelivered / totalAssigned) * 100 : 0;
+
+            // Per Title
+            const byTitle = TITLES.map(title => {
+                const matching = rows.filter(r => r.title === title);
+                const assigned = matching.reduce((s, r) => s + (Number(r.assigned) || 0), 0);
+                const delivered = matching.reduce((s, r) => s + (Number(r.delivered) || 0), 0);
+                const onhold = matching.reduce((s, r) => s + (Number(r.onhold) || 0), 0);
+                const perf = assigned > 0 ? (delivered / assigned) * 100 : 0;
+
+                const uniqueIds = new Set(matching.map(r => String(r.id).trim()).filter(Boolean));
+                masterKurir.forEach(m => {
+                    if (m.title === title && rows.some(r => String(r.id).trim() === String(m.id).trim())) {
+                        uniqueIds.add(String(m.id).trim());
+                    }
+                });
+                const mpp = uniqueIds.size > 0 ? uniqueIds.size : (assigned > 0 ? Math.max(1, matching.length) : 0);
+                const productivity = mpp > 0 ? Math.round(delivered / mpp) : 0;
+
+                return { title, assigned, delivered, onhold, perf, mpp, productivity };
+            });
+
+            // Per District
+            const byDistrict = DISTRICTS.map(district => {
+                const matching = rows.filter(r => r.zone === district);
+                const assigned = matching.reduce((s, r) => s + (Number(r.assigned) || 0), 0);
+                const delivered = matching.reduce((s, r) => s + (Number(r.delivered) || 0), 0);
+                const onhold = matching.reduce((s, r) => s + (Number(r.onhold) || 0), 0);
+                const perf = assigned > 0 ? (delivered / assigned) * 100 : 0;
+
+                const uniqueIds = new Set(matching.map(r => String(r.id).trim()).filter(Boolean));
+                const mpp = uniqueIds.size > 0 ? uniqueIds.size : (assigned > 0 ? Math.max(1, matching.length) : 0);
+
+                return { district, assigned, delivered, onhold, perf, mpp };
+            });
+
+            // Matrix District x Title
+            const matrixByDistrict = DISTRICTS.map(district => {
+                const dRows = rows.filter(r => r.zone === district);
+                const totalOutbond = dRows.reduce((s, r) => s + (Number(r.assigned) || 0), 0);
+
+                const items = TITLES.map(title => {
+                    const cellRows = dRows.filter(r => r.title === title);
+                    const assigned = cellRows.reduce((s, r) => s + (Number(r.assigned) || 0), 0);
+                    const delivered = cellRows.reduce((s, r) => s + (Number(r.delivered) || 0), 0);
+                    const onhold = cellRows.reduce((s, r) => s + (Number(r.onhold) || 0), 0);
+                    const perf = assigned > 0 ? (delivered / assigned) * 100 : 0;
+                    const ids = new Set(cellRows.map(r => String(r.id).trim()).filter(Boolean));
+                    const mpp = ids.size > 0 ? ids.size : (assigned > 0 ? Math.max(1, cellRows.length) : 0);
+                    const allocPct = totalOutbond > 0 ? (assigned / totalOutbond) * 100 : 0;
+
+                    return { title, assigned, delivered, onhold, perf, mpp, allocPct };
+                }).filter(item => item.assigned > 0 || item.delivered > 0 || item.onhold > 0 || item.mpp > 0);
+
+                return { district, totalOutbond, items };
+            }).filter(g => g.items.length > 0);
+
+            // Rider vs Driver
+            const riderAssigned = rows
+                .filter(r => String(r.title).toLowerCase().includes('rider'))
+                .reduce((s, r) => s + (Number(r.assigned) || 0), 0);
+            const driverAssigned = rows
+                .filter(r => String(r.title).toLowerCase().includes('driver'))
+                .reduce((s, r) => s + (Number(r.assigned) || 0), 0);
+            const otherAssigned = Math.max(0, totalAssigned - riderAssigned - driverAssigned);
+            const totalRiderOutbond = riderAssigned + otherAssigned;
+            const totalDriverOutbond = driverAssigned;
+
+            return {
+                totalAssigned,
+                totalDelivering,
+                totalDelivered,
+                totalOnhold,
+                todayPerformance,
+                byTitle,
+                byDistrict,
+                matrixByDistrict,
+                totalRiderOutbond,
+                totalDriverOutbond
+            };
+        }
+
+        // =========================================================================
+        // 3. DASHBOARD RENDERING (KPI, PIE CHART & AGGREGATION TABLES)
+        // =========================================================================
+        function renderPieChart(delivered, delivering, onhold) {
+            const container = document.getElementById('pieChartContainer');
+            const total = Math.max(1, delivered + delivering + onhold);
+            const slices = [
+                { value: delivered, color: '#82d616' },
+                { value: delivering, color: '#ffff00' },
+                { value: onhold, color: '#ff0000' }
+            ];
+
+            let cumulativeAngle = 0;
+            const cx = 55;
+            const cy = 50;
+            const r = 42;
+
+            const paths = slices.map(slice => {
+                if (slice.value <= 0) return '';
+                const angle = (slice.value / total) * 360;
+                if (angle >= 359.99) {
+                    return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${slice.color}" stroke="#ffffff" stroke-width="0.8"/>`;
+                }
+                const startRad = ((cumulativeAngle - 90) * Math.PI) / 180;
+                const endRad = ((cumulativeAngle + angle - 90) * Math.PI) / 180;
+                const x1 = cx + r * Math.cos(startRad);
+                const y1 = cy + r * Math.sin(startRad);
+                const x2 = cx + r * Math.cos(endRad);
+                const y2 = cy + r * Math.sin(endRad);
+                const largeArc = angle > 180 ? 1 : 0;
+                cumulativeAngle += angle;
+
+                return `<path d="M ${cx} ${cy} L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 ${largeArc} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z" fill="${slice.color}" stroke="#ffffff" stroke-width="0.8"/>`;
+            }).join('');
+
+            container.innerHTML = `
+                <svg viewBox="0 0 110 100" class="w-24 h-20 overflow-visible">
+                    ${paths}
+                    <text x="${cx}" y="${cy + 14}" text-anchor="middle" font-size="8.5" font-weight="800" fill="#1e293b">${formatNum(delivered)}</text>
+                    <text x="${cx + 12}" y="12" text-anchor="middle" font-size="7.5" font-weight="700" fill="#1e293b">${formatNum(delivering)} ${formatNum(onhold)}</text>
+                </svg>
+            `;
+        }
+
+        function renderDashboard() {
+            const agg = computeAggregations(courierData);
+
+            // KPI Cards
+            document.getElementById('kpiOutbond').textContent = formatNum(agg.totalAssigned);
+            document.getElementById('kpiDelivered').textContent = formatNum(agg.totalDelivered);
+            document.getElementById('kpiDelivering').textContent = formatNum(agg.totalDelivering);
+            document.getElementById('kpiOnhold').textContent = formatNum(agg.totalOnhold);
+
+            const perfEl = document.getElementById('kpiPerformance');
+            const perfBar = document.getElementById('kpiPerformanceBar');
+            const perfBox = document.getElementById('kpiPerformanceBox');
+            const perfStyle = getPerformanceStyle(agg.todayPerformance);
+
+            perfEl.textContent = formatPct(agg.todayPerformance);
+            perfEl.style.color = perfStyle.textColor;
+            perfEl.style.background = perfStyle.badgeBg;
+            perfBar.style.width = `${Math.max(2, Math.min(100, agg.todayPerformance)).toFixed(2)}%`;
+            perfBar.style.background = perfStyle.barBg;
+            perfBox.style.background = agg.todayPerformance >= 99.995
+                ? 'linear-gradient(135deg, #dcfce7 0%, #86efac 100%)'
+                : '#ffffff';
+
+            renderPieChart(agg.totalDelivered, agg.totalDelivering, agg.totalOnhold);
+
+            // 1. Performance Courier by Title
+            const activeTitles = agg.byTitle.filter(t => t.assigned > 0 || t.delivered > 0 || t.onhold > 0);
+            const titleSumAssigned = activeTitles.reduce((s, t) => s + t.assigned, 0);
+            const titleSumDelivered = activeTitles.reduce((s, t) => s + t.delivered, 0);
+            const titleSumOnhold = activeTitles.reduce((s, t) => s + t.onhold, 0);
+            const titleTotalPerf = titleSumAssigned > 0 ? (titleSumDelivered / titleSumAssigned) * 100 : 0;
+
+            document.getElementById('tblPerfByTitle').innerHTML = `
+                ${activeTitles.map((t, idx) => {
+                    const rowBg = idx % 2 === 0 ? '#ffffff' : '#fff8e7';
+                    return `
+                        <tr style="background-color: ${rowBg};">
+                            <td class="font-semibold text-slate-900">${t.title}</td>
+                            <td class="text-right font-semibold">${formatNum(t.assigned)}</td>
+                            <td class="text-right font-semibold">${formatNum(t.delivered)}</td>
+                            <td class="text-right font-semibold">${formatNum(t.onhold)}</td>
+                            ${renderPerformanceCell(t.perf)}
+                        </tr>
+                    `;
+                }).join('')}
+                <tr class="bg-[#d9d9d9] font-extrabold text-black">
+                    <td class="text-center">Total</td>
+                    <td class="text-right">${formatNum(titleSumAssigned)}</td>
+                    <td class="text-right">${formatNum(titleSumDelivered)}</td>
+                    <td class="text-right">${formatNum(titleSumOnhold)}</td>
+                    ${renderPerformanceCell(titleTotalPerf)}
+                </tr>
+            `;
+
+            // 2. Outbound Allocation
+            const activeAlloc = agg.byTitle.filter(t => t.assigned > 0 || t.delivered > 0 || t.mpp > 0);
+            const allocSumMpp = activeAlloc.reduce((s, t) => s + t.mpp, 0);
+            const allocSumDelivered = activeAlloc.reduce((s, t) => s + t.delivered, 0);
+            const allocSumAssigned = activeAlloc.reduce((s, t) => s + t.assigned, 0);
+            const allocTotalProd = allocSumMpp > 0 ? Math.round(allocSumDelivered / allocSumMpp) : 0;
+
+            document.getElementById('tblOutboundAlloc').innerHTML = `
+                ${activeAlloc.map((t, idx) => {
+                    const rowBg = idx % 2 === 0 ? '#ffffff' : '#fff8e7';
+                    const pct = allocSumAssigned > 0 ? (t.assigned / allocSumAssigned) * 100 : 0;
+                    return `
+                        <tr style="background-color: ${rowBg};">
+                            <td class="font-semibold text-slate-900">${t.title}</td>
+                            <td class="text-right font-semibold">${formatNum(t.mpp)}</td>
+                            <td class="text-right font-semibold">${formatNum(t.delivered)}</td>
+                            <td class="text-right font-semibold">${formatNum(t.productivity)}</td>
+                            ${renderAllocationCell(pct, 'blue')}
+                        </tr>
+                    `;
+                }).join('')}
+                <tr class="bg-[#d9d9d9] font-extrabold text-black">
+                    <td class="text-center">Total</td>
+                    <td class="text-right">${formatNum(allocSumMpp)}</td>
+                    <td class="text-right">${formatNum(allocSumDelivered)}</td>
+                    <td class="text-right">${formatNum(allocTotalProd)}</td>
+                    ${renderAllocationCell(activeAlloc.length > 0 ? 100 : 0, 'blue')}
+                </tr>
+            `;
+
+            // 3. Performance Courier by District
+            const activeDistricts = agg.byDistrict.filter(d => d.assigned > 0 || d.delivered > 0 || d.onhold > 0);
+            const distSumAssigned = activeDistricts.reduce((s, d) => s + d.assigned, 0);
+            const distSumDelivered = activeDistricts.reduce((s, d) => s + d.delivered, 0);
+            const distSumOnhold = activeDistricts.reduce((s, d) => s + d.onhold, 0);
+            const distTotalPerf = distSumAssigned > 0 ? (distSumDelivered / distSumAssigned) * 100 : 0;
+
+            document.getElementById('tblPerfByDistrict').innerHTML = `
+                ${activeDistricts.map((d, idx) => {
+                    const rowBg = idx % 2 === 0 ? '#ffffff' : '#fff8e7';
+                    return `
+                        <tr style="background-color: ${rowBg};">
+                            <td class="text-center font-bold text-slate-900">${d.district}</td>
+                            <td class="text-right font-semibold">${formatNum(d.assigned)}</td>
+                            <td class="text-right font-semibold">${formatNum(d.delivered)}</td>
+                            <td class="text-right font-semibold">${formatNum(d.onhold)}</td>
+                            ${renderPerformanceCell(d.perf)}
+                        </tr>
+                    `;
+                }).join('')}
+                <tr class="bg-[#d9d9d9] font-extrabold text-black">
+                    <td class="text-center">Total</td>
+                    <td class="text-right">${formatNum(distSumAssigned)}</td>
+                    <td class="text-right">${formatNum(distSumDelivered)}</td>
+                    <td class="text-right">${formatNum(distSumOnhold)}</td>
+                    ${renderPerformanceCell(distTotalPerf)}
+                </tr>
+            `;
+
+            // 4. Outbound Allocation by District
+            const activeDistAlloc = agg.byDistrict.filter(d => d.assigned > 0 || d.mpp > 0);
+            const distAllocMpp = activeDistAlloc.reduce((s, d) => s + d.mpp, 0);
+            const distAllocOutbond = activeDistAlloc.reduce((s, d) => s + d.assigned, 0);
+
+            document.getElementById('tblOutboundDistrict').innerHTML = `
+                ${activeDistAlloc.map((d, idx) => {
+                    const rowBg = idx % 2 === 0 ? '#ffffff' : '#fff8e7';
+                    const pct = distAllocOutbond > 0 ? (d.assigned / distAllocOutbond) * 100 : 0;
+                    return `
+                        <tr style="background-color: ${rowBg};">
+                            <td class="text-center font-bold text-slate-900">${d.district}</td>
+                            <td class="text-right font-semibold">${formatNum(d.mpp)}</td>
+                            <td class="text-right font-semibold">${formatNum(d.assigned)}</td>
+                            ${renderAllocationCell(pct, 'amber')}
+                        </tr>
+                    `;
+                }).join('')}
+                <tr class="bg-[#d9d9d9] font-extrabold text-black">
+                    <td class="text-center">Total</td>
+                    <td class="text-right">${formatNum(distAllocMpp)}</td>
+                    <td class="text-right">${formatNum(distAllocOutbond)}</td>
+                    ${renderAllocationCell(activeDistAlloc.length > 0 ? 100 : 0, 'amber')}
+                </tr>
+            `;
+
+            // 5. Matrix District x Title
+            const matrixSumAssigned = agg.matrixByDistrict.reduce((s, g) => s + g.totalOutbond, 0);
+            const matrixSumDelivered = agg.matrixByDistrict.reduce(
+                (s, g) => s + g.items.reduce((acc, it) => acc + it.delivered, 0), 0
+            );
+            const matrixSumOnhold = agg.matrixByDistrict.reduce(
+                (s, g) => s + g.items.reduce((acc, it) => acc + it.onhold, 0), 0
+            );
+            const matrixSumMpp = agg.matrixByDistrict.reduce(
+                (s, g) => s + g.items.reduce((acc, it) => acc + it.mpp, 0), 0
+            );
+            const matrixTotalPerf = matrixSumAssigned > 0 ? (matrixSumDelivered / matrixSumAssigned) * 100 : 0;
+
+            let matrixHtml = '';
+            agg.matrixByDistrict.forEach((group, gIdx) => {
+                const span = group.items.length;
+                const distBg = gIdx % 2 === 0 ? '#f1f5f9' : '#e2e8f0';
+
+                group.items.forEach((item, idx) => {
+                    const rowBg = idx % 2 === 0 ? '#ffffff' : '#fff8e7';
+                    matrixHtml += `<tr style="background-color: ${rowBg};">`;
+                    if (idx === 0) {
+                        matrixHtml += `<td rowspan="${span}" class="text-center font-extrabold text-slate-900" style="background-color: ${distBg};">${group.district}</td>`;
+                    }
+                    matrixHtml += `
+                        <td class="font-semibold text-slate-900">${item.title}</td>
+                        <td class="text-right font-semibold">${formatNum(item.assigned)}</td>
+                        <td class="text-right font-semibold">${formatNum(item.delivered)}</td>
+                        <td class="text-right font-semibold">${formatNum(item.onhold)}</td>
+                        ${renderPerformanceCell(item.perf)}
+                        <td class="text-right font-semibold">${formatNum(item.mpp)}</td>
+                    `;
+                    if (idx === 0) {
+                        matrixHtml += `<td rowspan="${span}" class="text-center font-bold text-slate-900" style="background-color: #dcfce7;">${formatNum(group.totalOutbond)}</td>`;
+                    }
+                    matrixHtml += `${renderAllocationCell(item.allocPct, 'amber')}</tr>`;
+                });
+            });
+
+            matrixHtml += `
+                <tr class="bg-[#d9d9d9] font-extrabold text-black">
+                    <td colspan="2" class="text-center">Total</td>
+                    <td class="text-right">${formatNum(matrixSumAssigned)}</td>
+                    <td class="text-right">${formatNum(matrixSumDelivered)}</td>
+                    <td class="text-right">${formatNum(matrixSumOnhold)}</td>
+                    ${renderPerformanceCell(matrixTotalPerf)}
+                    <td class="text-right">${formatNum(matrixSumMpp)}</td>
+                    <td class="text-center" style="background-color: #bbf7d0;">${formatNum(matrixSumAssigned)}</td>
+                    ${renderAllocationCell(agg.matrixByDistrict.length > 0 ? 100 : 0, 'amber')}
+                </tr>
+            `;
+            document.getElementById('tblMatrixDistrictTitle').innerHTML = matrixHtml;
+
+            // 6. Rider vs Driver Summary
+            const totalRD = agg.totalRiderOutbond + agg.totalDriverOutbond;
+            const riderPct = totalRD > 0 ? (agg.totalRiderOutbond / totalRD) * 100 : 0;
+            const driverPct = totalRD > 0 ? (agg.totalDriverOutbond / totalRD) * 100 : 0;
+
+            document.getElementById('tblRiderDriverSummary').innerHTML = `
+                <tr style="background-color: #f1f5f9;">
+                    <td class="text-center font-bold text-slate-900">Rider</td>
+                    ${renderAllocationCell(riderPct, 'red')}
+                    ${renderAllocationCell(riderPct, 'amber')}
+                </tr>
+                <tr style="background-color: #fff8e7;">
+                    <td class="text-center font-bold text-slate-900">Driver</td>
+                    ${renderAllocationCell(driverPct, 'red')}
+                    ${renderAllocationCell(driverPct, 'amber')}
+                </tr>
+                <tr class="bg-[#d9d9d9] font-extrabold text-black">
+                    <td class="text-center">Total</td>
+                    ${renderAllocationCell(totalRD > 0 ? 100 : 0, 'red')}
+                    ${renderAllocationCell(totalRD > 0 ? 100 : 0, 'amber')}
+                </tr>
+            `;
+        }
+
+        // =========================================================================
+        // 4. PROGRESS PENGIRIMAN TABLE (EDITABLE COURIER ROWS)
+        // =========================================================================
+        function renderProgressTable() {
+            const q = (document.getElementById('searchCourierInput')?.value || '').trim().toLowerCase();
+            const zone = document.getElementById('filterZoneSelect')?.value || 'ALL';
+            const title = document.getElementById('filterTitleSelect')?.value || 'ALL';
+            const status = document.getElementById('filterStatusSelect')?.value || 'ALL';
+
+            const filtered = courierData.filter(row => {
+                const matchText = !q ||
+                    String(row.id).toLowerCase().includes(q) ||
+                    String(row.name).toLowerCase().includes(q);
+                const matchZone = zone === 'ALL' || row.zone === zone;
+                const matchTitle = title === 'ALL' || row.title === title;
+                const matchStatus = status === 'ALL' || (row.desc || 'FINAL') === status;
+                return matchText && matchZone && matchTitle && matchStatus;
+            });
+
+            const tbody = document.getElementById('progressTableBody');
+            tbody.innerHTML = filtered.map(row => {
+                const realIdx = courierData.indexOf(row);
+                const assigned = Number(row.assigned) || 0;
+                const delivered = Number(row.delivered) || 0;
+                const onhold = Number(row.onhold) || 0;
+                const perf = assigned > 0 ? (delivered / assigned) * 100 : 0;
+                const st = getPerformanceStyle(perf);
+                const isFollowUp = (row.desc || 'FINAL') === 'FOLLOW UP';
+                const descBg = isFollowUp ? '#fecaca' : '#bbf7d0';
+                const descColor = isFollowUp ? '#7f1d1d' : '#052e16';
+
+                return `
+                    <tr>
+                        <td class="text-center font-mono font-semibold">${row.id}</td>
+                        <td class="font-semibold">${row.name}</td>
+                        <td class="text-center">${row.title}</td>
+                        <td class="text-center font-bold">${row.zone}</td>
+                        <td class="text-right font-semibold cursor-pointer bg-white" contenteditable="true" onblur="updateCourierMetric(${realIdx}, 'assigned', this.innerText)">${assigned}</td>
+                        <td class="text-right font-semibold cursor-pointer bg-white" contenteditable="true" onblur="updateCourierMetric(${realIdx}, 'delivering', this.innerText)">${Number(row.delivering) || 0}</td>
+                        <td class="text-right font-semibold cursor-pointer bg-white" contenteditable="true" onblur="updateCourierMetric(${realIdx}, 'delivered', this.innerText)">${delivered}</td>
+                        <td class="text-right font-semibold cursor-pointer bg-white" contenteditable="true" onblur="updateCourierMetric(${realIdx}, 'onhold', this.innerText)">${onhold}</td>
+                        <td class="text-center font-extrabold" style="background: ${st.barBg}; color: ${st.textColor}; box-shadow: ${st.glow};">
+                            ${formatPct(perf)}
+                        </td>
+                        <td class="text-center p-0.5">
+                            <select onchange="updateCourierDesc(${realIdx}, this.value)" style="background:${descBg}; color:${descColor};" class="text-[10.5px] font-bold px-1.5 py-0.5 rounded border border-slate-400 focus:outline-none">
+                                <option value="FINAL" ${!isFollowUp ? 'selected' : ''}>FINAL</option>
+                                <option value="FOLLOW UP" ${isFollowUp ? 'selected' : ''}>FOLLOW UP</option>
+                            </select>
+                        </td>
+                        <td class="text-center">
+                            <button onclick="deleteCourierRow(${realIdx})" title="Hapus baris" class="text-red-600 hover:text-red-800 font-bold px-1">✕</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('courierCountBadge').textContent = courierData.length;
+            document.getElementById('progressSummaryFooter').textContent =
+                `Menampilkan ${filtered.length} dari ${courierData.length} kurir`;
+        }
+
+        function updateCourierMetric(index, field, rawVal) {
+            if (index < 0 || index >= courierData.length) return;
+            const parsed = parseInt(String(rawVal).replace(/[^0-9-]/g, ''), 10);
+            courierData[index][field] = Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
+            renderAll();
+        }
+
+        function updateCourierDesc(index, val) {
+            if (index < 0 || index >= courierData.length) return;
+            courierData[index].desc = val;
+            renderProgressTable();
+        }
+
+        function addNewCourierRow() {
+            courierData.unshift({
+                id: String(Math.floor(100000 + Math.random() * 900000)),
+                name: 'KURIR BARU',
+                title: 'Rider Dedicated',
+                zone: 'MARON',
+                assigned: 100,
+                delivering: 0,
+                delivered: 100,
+                onhold: 0,
+                desc: 'FINAL'
+            });
+            renderAll();
+            showToast('Baris kurir baru ditambahkan.');
+        }
+
+        function deleteCourierRow(index) {
+            if (index < 0 || index >= courierData.length) return;
+            courierData.splice(index, 1);
+            renderAll();
+            showToast('Baris kurir dihapus.');
+        }
+
+        // =========================================================================
+        // 5. EXCEL / CSV UPLOAD, EXPORT & MASTER KURIR MODAL
+        // =========================================================================
+        function mapCourierMetaFromMaster(id, name) {
+            const cleanId = String(id || '').trim();
+            const cleanName = String(name || '').trim();
+            const foundById = cleanId
+                ? masterKurir.find(m => String(m.id).trim() === cleanId)
+                : null;
+            const foundByName = !foundById && cleanName
+                ? masterKurir.find(m => String(m.name).trim().toUpperCase() === cleanName.toUpperCase())
+                : null;
+            const found = foundById || foundByName;
+
+            if (found) {
+                return {
+                    id: cleanId || String(found.id).trim(),
+                    name: cleanName || found.name,
+                    title: found.title,
+                    zone: found.zone
+                };
+            }
+            const upperName = cleanName.toUpperCase();
+            let zone = 'MARON';
+            if (upperName.includes('KRUCIL')) zone = 'KRUCIL';
+            else if (upperName.includes('TIRIS')) zone = 'TIRIS';
+            return {
+                id: cleanId || '000000',
+                name: cleanName || 'KURIR',
+                title: 'Rider Dedicated',
+                zone
+            };
+        }
+
+        /**
+         * Menormalisasi kunci objek baris agar pencocokan nama kolom lebih toleran.
+         */
+        function normalizeRowKeys(rowObj) {
+            const map = {};
+            if (!rowObj || typeof rowObj !== 'object') return map;
+            Object.keys(rowObj).forEach(k => {
+                const cleanKey = String(k || '')
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]/g, '');
+                if (cleanKey && !(cleanKey in map)) {
+                    map[cleanKey] = rowObj[k];
+                }
+            });
+            return map;
+        }
+
+        /**
+         * Mengambil nilai pertama yang tersedia berdasarkan daftar kemungkinan nama kolom.
+         */
+        function pickColumnValue(normRow, candidateKeys, fallback = '') {
+            for (const key of candidateKeys) {
+                const cleanKey = String(key || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (cleanKey in normRow) {
+                    const val = normRow[cleanKey];
+                    if (val !== undefined && val !== null && String(val).trim() !== '') {
+                        return val;
+                    }
+                }
+            }
+            return fallback;
+        }
+
+        /**
+         * Mengubah nilai angka (termasuk format string berkoma/spasi) menjadi number aman.
+         */
+        function parseNumericCell(val) {
+            if (typeof val === 'number') return Number.isFinite(val) ? val : 0;
+            const cleaned = String(val ?? '')
+                .replace(/,/g, '')
+                .replace(/[^0-9.-]/g, '')
+                .trim();
+            if (!cleaned || cleaned === '-' || cleaned === '.') return 0;
+            const num = Number(cleaned);
+            return Number.isFinite(num) ? num : 0;
+        }
+
+        /**
+         * Menemukan indeks baris header yang paling sesuai pada sheet mentah (array of arrays).
+         */
+        function detectHeaderRowIndex(aoa) {
+            const headerKeywords = [
+                'id', 'nama', 'name', 'driver', 'courier', 'fleet',
+                'assigned', 'delivering', 'delivered', 'onhold', 'zone', 'title'
+            ];
+            let bestRowIdx = 0;
+            let bestScore = -1;
+
+            const scanLimit = Math.min(aoa.length, 25);
+            for (let i = 0; i < scanLimit; i++) {
+                const row = Array.isArray(aoa[i]) ? aoa[i] : [];
+                let score = 0;
+                row.forEach(cell => {
+                    const token = String(cell || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                    if (!token) return;
+                    if (headerKeywords.includes(token)) {
+                        score += 3;
+                    } else if (headerKeywords.some(kw => token.includes(kw))) {
+                        score += 1;
+                    }
+                });
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestRowIdx = i;
+                }
+            }
+            return bestScore > 0 ? bestRowIdx : 0;
+        }
+
+        /**
+         * Mengonversi array of arrays (aoa) dari sheet Excel/CSV menjadi daftar objek baris.
+         */
+        function rowsFromAoa(aoa) {
+            if (!Array.isArray(aoa) || aoa.length === 0) return [];
+            const headerIdx = detectHeaderRowIndex(aoa);
+            const rawHeaders = (aoa[headerIdx] || []).map((h, idx) => {
+                const text = String(h ?? '').trim();
+                return text || `Column_${idx}`;
+            });
+
+            const result = [];
+            for (let r = headerIdx + 1; r < aoa.length; r++) {
+                const line = aoa[r];
+                if (!Array.isArray(line)) continue;
+                const hasAnyContent = line.some(cell => cell !== undefined && cell !== null && String(cell).trim() !== '');
+                if (!hasAnyContent) continue;
+
+                const obj = {};
+                rawHeaders.forEach((colName, cIdx) => {
+                    obj[colName] = line[cIdx] ?? '';
+                });
+                result.push(obj);
+            }
+            return result;
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files?.[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+
+                    const preferredSheet = workbook.SheetNames.find(name => {
+                        const up = String(name).toUpperCase();
+                        return up.includes('DATA') || up.includes('FLEET') || up.includes('PROGRESS') || up.includes('COURIER');
+                    });
+                    const targetSheetName = preferredSheet || workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[targetSheetName];
+
+                    const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+                    let rows = rowsFromAoa(aoa);
+
+                    if (!Array.isArray(rows) || rows.length === 0) {
+                        rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+                    }
+
+                    if (!Array.isArray(rows) || rows.length === 0) {
+                        showToast('File kosong atau tidak terbaca.', '⚠️');
+                        return;
+                    }
+
+                    const parsedCouriers = rows.map(r => {
+                        const norm = normalizeRowKeys(r);
+
+                        let rawId = String(pickColumnValue(norm, [
+                            'id', 'driverid', 'courierid', 'fleetid', 'userid', 'nik', 'kode'
+                        ], '')).trim();
+
+                        let rawName = String(pickColumnValue(norm, [
+                            'nama', 'name', 'drivername', 'couriername', 'fleetname',
+                            'driver', 'courier', 'fleet', 'kurir', 'personil', 'staff'
+                        ], '')).trim();
+
+                        const bracketMatch = rawName.match(/^\[(\d+)\]\s*(.+)$/);
+                        if (bracketMatch) {
+                            if (!rawId) rawId = bracketMatch[1];
+                            rawName = bracketMatch[2].trim();
+                        } else if (!rawId) {
+                            const dashMatch = rawName.match(/^(\d{4,})\s*[-–:]\s*(.+)$/);
+                            if (dashMatch) {
+                                rawId = dashMatch[1];
+                                rawName = dashMatch[2].trim();
+                            }
+                        }
+
+                        const lowerName = rawName.toLowerCase();
+                        if (!rawId && (lowerName === 'total' || lowerName.startsWith('grand total') || lowerName.startsWith('subtotal'))) {
+                            return null;
+                        }
+
+                        const mapped = mapCourierMetaFromMaster(rawId, rawName);
+
+                        const rawTitle = String(pickColumnValue(norm, [
+                            'title', 'role', 'jabatan', 'tipe', 'type', 'category', 'kategori'
+                        ], '')).trim();
+                        const title = rawTitle || mapped.title;
+
+                        const rawZone = String(pickColumnValue(norm, [
+                            'zone', 'district', 'area', 'kecamatan', 'wilayah', 'hub', 'station'
+                        ], '')).trim().toUpperCase();
+                        const zone = rawZone || mapped.zone;
+
+                        const assigned = parseNumericCell(pickColumnValue(norm, [
+                            'assigned', 'outbound', 'outbond', 'totaloutbound', 'totaloutbond',
+                            'target', 'order', 'totalorder', 'assign'
+                        ], 0));
+
+                        const delivering = parseNumericCell(pickColumnValue(norm, [
+                            'delivering', 'ondelivery', 'inprogress', 'intransit', 'proses'
+                        ], 0));
+
+                        const delivered = parseNumericCell(pickColumnValue(norm, [
+                            'delivered', 'success', 'sukses', 'complete', 'completed', 'done', 'terkirim'
+                        ], 0));
+
+                        const onhold = parseNumericCell(pickColumnValue(norm, [
+                            'onhold', 'hold', 'pending', 'failed', 'gagal', 'return', 'retur'
+                        ], 0));
+
+                        const rawDesc = String(pickColumnValue(norm, [
+                            'description', 'desc', 'status', 'keterangan', 'remarks', 'note'
+                        ], '')).trim().toUpperCase();
+
+                        const desc = rawDesc.includes('FOLLOW')
+                            ? 'FOLLOW UP'
+                            : (rawDesc.includes('FINAL')
+                                ? 'FINAL'
+                                : (delivering > 0 ? 'FOLLOW UP' : 'FINAL'));
+
+                        return {
+                            id: mapped.id,
+                            name: mapped.name,
+                            title,
+                            zone,
+                            assigned,
+                            delivering,
+                            delivered,
+                            onhold,
+                            desc
+                        };
+                    }).filter(item => item && (item.name || item.assigned > 0 || item.delivered > 0 || item.delivering > 0 || item.onhold > 0));
+
+                    if (parsedCouriers.length === 0) {
+                        showToast('Tidak ada data kurir valid pada file. Periksa nama kolom file Anda.', '⚠️');
+                        return;
+                    }
+
+                    courierData = parsedCouriers;
+                    renderAll();
+                    showToast(`Berhasil memuat ${parsedCouriers.length} data kurir dari ${file.name}!`);
+                } catch (err) {
+                    console.error(err);
+                    showToast('Gagal memproses file Excel/CSV.', '❌');
+                } finally {
+                    event.target.value = '';
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function exportCurrentExcel() {
+            try {
+                const wsData = courierData.map(r => {
+                    const assigned = Number(r.assigned) || 0;
+                    const delivered = Number(r.delivered) || 0;
+                    const perf = assigned > 0 ? `${((delivered / assigned) * 100).toFixed(2)}%` : '0.00%';
+                    return {
+                        ID: r.id,
+                        Nama: r.name,
+                        TITLE: r.title,
+                        Zone: r.zone,
+                        Assigned: assigned,
+                        Delivering: Number(r.delivering) || 0,
+                        Delivered: delivered,
+                        Onhold: Number(r.onhold) || 0,
+                        Performance: perf,
+                        Description: r.desc || 'FINAL'
+                    };
+                });
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.json_to_sheet(wsData);
+                XLSX.utils.book_append_sheet(wb, ws, 'DATA');
+                const dt = (document.getElementById('reportDateInput').value || 'Report').replace(/\s+/g, '_');
+                XLSX.writeFile(wb, `Progress_Pengiriman_${dt}.xlsx`);
+                showToast('File Excel (.xlsx) berhasil diunduh!');
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal mengekspor Excel.', '❌');
+            }
+        }
+
+        function openMasterModal() {
+            document.getElementById('masterKurirModal').classList.remove('hidden');
+            renderMasterTable();
+        }
+
+        function closeMasterModal() {
+            document.getElementById('masterKurirModal').classList.add('hidden');
+        }
+
+        function renderMasterTable() {
+            const q = (document.getElementById('searchMasterInput')?.value || '').trim().toLowerCase();
+            const tbody = document.getElementById('masterTableBody');
+            const filtered = masterKurir.filter(m =>
+                !q ||
+                String(m.id).toLowerCase().includes(q) ||
+                String(m.name).toLowerCase().includes(q) ||
+                String(m.zone).toLowerCase().includes(q)
+            );
+
+            tbody.innerHTML = filtered.map(m => {
+                const idx = masterKurir.indexOf(m);
+                return `
+                    <tr class="hover:bg-slate-800/60">
+                        <td class="p-1.5 border border-slate-700">
+                            <input type="text" value="${m.id}" onchange="masterKurir[${idx}].id = this.value.trim()" class="bg-slate-800 border border-slate-600 rounded px-2 py-1 w-24 text-white">
+                        </td>
+                        <td class="p-1.5 border border-slate-700">
+                            <input type="text" value="${m.name}" onchange="masterKurir[${idx}].name = this.value.trim()" class="bg-slate-800 border border-slate-600 rounded px-2 py-1 w-full text-white">
+                        </td>
+                        <td class="p-1.5 border border-slate-700">
+                            <select onchange="masterKurir[${idx}].title = this.value" class="bg-slate-800 border border-slate-600 rounded px-2 py-1 text-white">
+                                ${TITLES.map(t => `<option value="${t}" ${m.title === t ? 'selected' : ''}>${t}</option>`).join('')}
+                            </select>
+                        </td>
+                        <td class="p-1.5 border border-slate-700">
+                            <select onchange="masterKurir[${idx}].zone = this.value" class="bg-slate-800 border border-slate-600 rounded px-2 py-1 text-white">
+                                ${DISTRICTS.map(d => `<option value="${d}" ${m.zone === d ? 'selected' : ''}>${d}</option>`).join('')}
+                            </select>
+                        </td>
+                        <td class="p-1.5 border border-slate-700 text-center">
+                            <button onclick="deleteMasterRow(${idx})" class="text-red-400 hover:text-red-300 font-bold px-2">✕</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function addMasterRow() {
+            masterKurir.unshift({
+                id: String(Math.floor(100000 + Math.random() * 900000)),
+                name: 'KURIR MASTER BARU',
+                title: 'Rider Dedicated',
+                zone: 'MARON'
+            });
+            renderMasterTable();
+        }
+
+        function deleteMasterRow(idx) {
+            if (idx < 0 || idx >= masterKurir.length) return;
+            masterKurir.splice(idx, 1);
+            renderMasterTable();
+        }
+
+        function resetMasterToDefault() {
+            masterKurir = DEFAULT_COURIER_DATA.map(c => ({
+                id: String(c.id),
+                name: String(c.name),
+                title: String(c.title),
+                zone: String(c.zone)
+            }));
+            persistMasterKurir();
+            renderMasterTable();
+            showToast('Master Kurir direset ke default.');
+        }
+
+        function saveMasterAndClose() {
+            persistMasterKurir();
+            courierData = courierData.map(row => {
+                const found = masterKurir.find(m => String(m.id).trim() === String(row.id).trim());
+                return found ? { ...row, name: found.name, title: found.title, zone: found.zone } : row;
+            });
+            closeMasterModal();
+            renderAll();
+            showToast('Master Kurir disimpan dan diterapkan!');
+        }
+
+        function renderAll() {
+            renderDashboard();
+            renderProgressTable();
+        }
+
+        // =========================================================================
+        // 6. UI HELPERS (TABS, THEME SWITCHER, HEADER META, DOWNLOAD PNG, TOAST)
+        // =========================================================================
+        function switchTheme(themeName) {
+            const normalized = themeName === 'executive' ? 'executive' : 'classic';
+            const body = document.body;
+            const badge = document.getElementById('activeThemeBadge');
+            const select = document.getElementById('themeSelect');
+            if (select && select.value !== normalized) {
+                select.value = normalized;
+            }
+
+            if (normalized === 'executive') {
+                body.classList.add('exec-theme');
+                if (badge) badge.textContent = 'Executive Modern View';
+                showToast('Tema diubah ke Executive Modern Dashboard!');
+            } else {
+                body.classList.remove('exec-theme');
+                if (badge) badge.textContent = 'Classic Excel View';
+                showToast('Tema diubah ke Classic Excel View!');
+            }
+            try {
+                localStorage.setItem('maron_hub_theme_v1', normalized);
+            } catch (e) {}
+        }
+
+        function toggleTheme() {
+            const isExec = document.body.classList.contains('exec-theme');
+            switchTheme(isExec ? 'classic' : 'executive');
+        }
+
+        function switchTab(tabName) {
+            const vDash = document.getElementById('viewDashboard');
+            const vProg = document.getElementById('viewProgress');
+            const bDash = document.getElementById('tabBtnDashboard');
+            const bProg = document.getElementById('tabBtnProgress');
+
+            if (tabName === 'dashboard') {
+                vDash.classList.remove('hidden');
+                vProg.classList.add('hidden');
+                bDash.className = "px-3.5 py-1.5 rounded-md text-xs sm:text-sm font-semibold transition bg-blue-600 text-white shadow";
+                bProg.className = "px-3.5 py-1.5 rounded-md text-xs sm:text-sm font-semibold transition text-slate-300 hover:text-white";
+            } else {
+                vDash.classList.add('hidden');
+                vProg.classList.remove('hidden');
+                bProg.className = "px-3.5 py-1.5 rounded-md text-xs sm:text-sm font-semibold transition bg-blue-600 text-white shadow";
+                bDash.className = "px-3.5 py-1.5 rounded-md text-xs sm:text-sm font-semibold transition text-slate-300 hover:text-white";
+            }
+        }
+
+        function updateHeaderMeta() {
+            const hub = document.getElementById('hubNameInput').value || 'Maron Hub';
+            const dt = document.getElementById('reportDateInput').value || '25-Nov-26';
+            const topBrand = document.getElementById('topBrandLabel');
+            const bannerSub = document.getElementById('bannerHubSubLabel');
+            if (topBrand) topBrand.textContent = hub;
+            if (bannerSub) bannerSub.textContent = hub;
+            document.getElementById('footerHubName').textContent = hub.toUpperCase();
+            document.getElementById('displayReportDate').textContent = dt;
+        }
+
+        function handleLogoError(imgEl) {
+            if (!imgEl || imgEl.dataset.fallbackApplied === '1') return;
+            imgEl.dataset.fallbackApplied = '1';
+            imgEl.src = 'https://placehold.co/240x80/7f1d1d/fde047?text=SPX+MARON+JATIM+V';
+            const fav = document.getElementById('browserFavicon');
+            if (fav && !localStorage.getItem('maron_hub_custom_logo_v1')) {
+                fav.type = 'image/svg+xml';
+                fav.href = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#7f1d1d"/><circle cx="32" cy="26" r="10" fill="#fbbf24"/><path d="M16 50c2-9 10-14 16-14s14 5 16 14" fill="#f97316"/></svg>');
+            }
+        }
+
+        function syncFavicon(dataUrl) {
+            const fav = document.getElementById('browserFavicon');
+            if (!fav || !dataUrl) return;
+            fav.type = 'image/png';
+            fav.href = dataUrl;
+        }
+
+        function handleLogoUpload(event) {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const dataUrl = e.target?.result;
+                if (!dataUrl) return;
+                ['hubLogoImg', 'footerHubLogoImg'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.dataset.fallbackApplied = '1';
+                        el.src = dataUrl;
+                    }
+                });
+                syncFavicon(dataUrl);
+                try {
+                    localStorage.setItem('maron_hub_custom_logo_v1', dataUrl);
+                } catch (err) {}
+                showToast('Logo & ikon tab Maron Hub berhasil diperbarui!');
+            };
+            reader.readAsDataURL(file);
+            event.target.value = '';
+        }
+
+        function downloadReportPNG() {
+            switchTab('dashboard');
+            showToast("Sedang menyiapkan gambar PNG...", "📸");
+
+            setTimeout(() => {
+                const target = document.getElementById('captureArea');
+                html2canvas(target, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#1f4e78'
+                }).then(canvas => {
+                    const link = document.createElement('a');
+                    const hub = (document.getElementById('hubNameInput').value || 'Maron_Hub').replace(/\s+/g, '_');
+                    const dt = (document.getElementById('reportDateInput').value || 'Report').replace(/\s+/g, '_');
+                    link.download = `Daily_Monitoring_${hub}_${dt}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    showToast("Gambar PNG siap dibagikan ke grup!");
+                }).catch(err => {
+                    console.error(err);
+                    showToast("Gagal membuat gambar PNG.", "❌");
+                });
+            }, 150);
+        }
+
+        function showToast(msg, icon = "✅") {
+            const box = document.getElementById('toastBox');
+            document.getElementById('toastMsg').textContent = msg;
+            document.getElementById('toastIcon').textContent = icon;
+            box.classList.remove('hidden');
+            clearTimeout(window._toastTimer);
+            window._toastTimer = setTimeout(() => {
+                box.classList.add('hidden');
+            }, 3500);
+        }
+
+        // Boot Aplikasi
+        window.onload = function () {
+            initMasterKurir();
+            try {
+                const savedLogo = localStorage.getItem('maron_hub_custom_logo_v1');
+                if (savedLogo) {
+                    ['hubLogoImg', 'footerHubLogoImg'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            el.dataset.fallbackApplied = '1';
+                            el.src = savedLogo;
+                        }
+                    });
+                    syncFavicon(savedLogo);
+                }
+                const savedTheme = localStorage.getItem('maron_hub_theme_v1');
+                if (savedTheme === 'executive' || savedTheme === 'classic') {
+                    switchTheme(savedTheme);
+                }
+            } catch (e) {}
+            renderAll();
+        };
+    </script>
+</body>
+</html>
