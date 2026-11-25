@@ -220,6 +220,11 @@
                     <input type="file" id="excelUploadInput" accept=".xlsx,.xls,.csv" class="hidden" onchange="handleFileUpload(event)">
                 </label>
 
+                <!-- Reset Data Default -->
+                <button type="button" onclick="resetCourierDataToDefault()" title="Kembalikan data kurir ke data bawaan awal" class="bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-500/40 text-xs font-semibold px-2.5 py-2 rounded-lg shadow transition">
+                    Reset Default
+                </button>
+
                 <!-- Master Kurir Modal Trigger -->
                 <button onclick="openMasterModal()" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow transition flex items-center gap-1.5">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -695,12 +700,101 @@
         let courierData = JSON.parse(JSON.stringify(DEFAULT_COURIER_DATA));
         let masterKurir = [];
 
+        const STORAGE_KEYS = {
+            COURIER_DATA: 'maron_hub_courier_data_v1',
+            META: 'maron_hub_meta_v1',
+            MASTER_KURIR: 'maron_hub_master_kurir_v1',
+            THEME: 'maron_hub_theme_v1',
+            LOGO: 'maron_hub_custom_logo_v1'
+        };
+
+        /**
+         * Menyimpan data kurir aktif ke localStorage agar tidak hilang saat web ditutup.
+         */
+        function persistCourierData() {
+            try {
+                if (Array.isArray(courierData)) {
+                    localStorage.setItem(STORAGE_KEYS.COURIER_DATA, JSON.stringify(courierData));
+                }
+            } catch (e) {
+                console.warn('Gagal menyimpan data kurir ke localStorage:', e);
+            }
+        }
+
+        /**
+         * Memuat data kurir tersimpan dari localStorage jika tersedia.
+         */
+        function loadPersistedCourierData() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEYS.COURIER_DATA);
+                if (!raw) return;
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    courierData = parsed;
+                }
+            } catch (e) {
+                console.warn('Gagal memuat data kurir dari localStorage:', e);
+            }
+        }
+
+        /**
+         * Menyimpan metadata header (Hub, Date, Tagline) ke localStorage.
+         */
+        function persistHeaderMeta() {
+            try {
+                const meta = {
+                    hub: document.getElementById('hubNameInput')?.value || 'Maron Hub',
+                    date: document.getElementById('reportDateInput')?.value || '25-Nov-26',
+                    tagline: document.getElementById('footerTaglineInput')?.value || 'SPX yang keras atau anda yang lemah?'
+                };
+                localStorage.setItem(STORAGE_KEYS.META, JSON.stringify(meta));
+            } catch (e) {
+                console.warn('Gagal menyimpan metadata ke localStorage:', e);
+            }
+        }
+
+        /**
+         * Memuat metadata header (Hub, Date, Tagline) dari localStorage.
+         */
+        function loadPersistedHeaderMeta() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEYS.META);
+                if (!raw) return;
+                const meta = JSON.parse(raw);
+                if (meta && typeof meta === 'object') {
+                    if (meta.hub && document.getElementById('hubNameInput')) {
+                        document.getElementById('hubNameInput').value = meta.hub;
+                    }
+                    if (meta.date && document.getElementById('reportDateInput')) {
+                        document.getElementById('reportDateInput').value = meta.date;
+                    }
+                    if (meta.tagline && document.getElementById('footerTaglineInput')) {
+                        document.getElementById('footerTaglineInput').value = meta.tagline;
+                    }
+                }
+            } catch (e) {
+                console.warn('Gagal memuat metadata dari localStorage:', e);
+            }
+        }
+
+        /**
+         * Mengembalikan data kurir ke data bawaan awal dan menghapus data upload tersimpan.
+         */
+        function resetCourierDataToDefault() {
+            courierData = JSON.parse(JSON.stringify(DEFAULT_COURIER_DATA));
+            try {
+                localStorage.removeItem(STORAGE_KEYS.COURIER_DATA);
+            } catch (e) {}
+            renderAll();
+            showToast('Data kurir dikembalikan ke data default.');
+        }
+
         /**
          * Memuat master kurir dari localStorage atau membentuknya dari data default.
          */
         function initMasterKurir() {
             try {
-                const raw = localStorage.getItem('maron_hub_master_kurir_v1');
+                const raw = localStorage.getItem(STORAGE_KEYS.MASTER_KURIR);
                 if (raw) {
                     const parsed = JSON.parse(raw);
                     if (Array.isArray(parsed) && parsed.length > 0) {
@@ -721,7 +815,7 @@
 
         function persistMasterKurir() {
             try {
-                localStorage.setItem('maron_hub_master_kurir_v1', JSON.stringify(masterKurir));
+                localStorage.setItem(STORAGE_KEYS.MASTER_KURIR, JSON.stringify(masterKurir));
             } catch (e) {
                 console.warn('Gagal menyimpan master kurir ke localStorage:', e);
             }
@@ -1277,6 +1371,7 @@
         function updateCourierDesc(index, val) {
             if (index < 0 || index >= courierData.length) return;
             courierData[index].desc = val;
+            persistCourierData();
             renderProgressTable();
         }
 
@@ -1742,6 +1837,7 @@
         }
 
         function renderAll() {
+            persistCourierData();
             renderDashboard();
             renderProgressTable();
         }
@@ -1805,6 +1901,7 @@
             if (bannerSub) bannerSub.textContent = hub;
             document.getElementById('footerHubName').textContent = hub.toUpperCase();
             document.getElementById('displayReportDate').textContent = dt;
+            persistHeaderMeta();
         }
 
         function handleLogoError(imgEl) {
@@ -1888,8 +1985,15 @@
         // Boot Aplikasi
         window.onload = function () {
             initMasterKurir();
+            loadPersistedCourierData();
+            loadPersistedHeaderMeta();
+            const taglineInput = document.getElementById('footerTaglineInput');
+            if (taglineInput) {
+                taglineInput.addEventListener('change', persistHeaderMeta);
+            }
+            updateHeaderMeta();
             try {
-                const savedLogo = localStorage.getItem('maron_hub_custom_logo_v1');
+                const savedLogo = localStorage.getItem(STORAGE_KEYS.LOGO);
                 if (savedLogo) {
                     ['hubLogoImg', 'footerHubLogoImg'].forEach(id => {
                         const el = document.getElementById(id);
@@ -1900,7 +2004,7 @@
                     });
                     syncFavicon(savedLogo);
                 }
-                const savedTheme = localStorage.getItem('maron_hub_theme_v1');
+                const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME);
                 if (savedTheme === 'executive' || savedTheme === 'classic') {
                     switchTheme(savedTheme);
                 }
