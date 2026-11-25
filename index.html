@@ -1485,17 +1485,63 @@
         }
 
         /**
-         * Mengambil teks ID atau nama kurir dari nilai sel/kolom pertama yang berupa teks non-angka.
+         * Menguraikan string gabungan seperti "[1041055] ABDUL WAFI" atau "1041055 - ABDUL WAFI".
+         */
+        function parseCombinedIdName(text) {
+            const s = String(text || '').trim();
+            if (!s) return { id: '', name: '' };
+
+            const bracketMatch = s.match(/^\[(\d{3,15})\]\s*(.+)$/);
+            if (bracketMatch) {
+                return { id: bracketMatch[1].trim(), name: bracketMatch[2].trim() };
+            }
+
+            const parenMatch = s.match(/^\((\d{3,15})\)\s*(.+)$/);
+            if (parenMatch) {
+                return { id: parenMatch[1].trim(), name: parenMatch[2].trim() };
+            }
+
+            const dashMatch = s.match(/^(\d{4,15})\s*[-–:|/]\s*(.+)$/);
+            if (dashMatch) {
+                return { id: dashMatch[1].trim(), name: dashMatch[2].trim() };
+            }
+
+            return { id: '', name: s };
+        }
+
+        /**
+         * Memeriksa apakah sebuah string merupakan kode lokasi/rack seperti "00N-B-01" daripada ID kurir.
+         */
+        function isZoneOrRackCode(str) {
+            const s = String(str || '').trim();
+            return /^[0-9]{1,3}[A-Z]{1,3}-[A-Z0-9]+-[0-9]+$/i.test(s);
+        }
+
+        /**
+         * Mengambil teks ID atau nama kurir dari nilai sel/kolom (termasuk format "[1041055] ABDUL WAFI").
          */
         function extractFallbackIdentity(rawRow, normRow) {
             let id = '';
             let name = '';
 
             const values = rawRow && typeof rawRow === 'object' ? Object.values(rawRow) : Object.values(normRow);
+
+            // Prioritas 1: cari sel yang sudah mengandung pola "[ID] NAMA" atau "ID - NAMA"
             for (const v of values) {
                 if (v === undefined || v === null) continue;
                 const s = String(v).trim();
                 if (!s) continue;
+                const combined = parseCombinedIdName(s);
+                if (combined.id) {
+                    return { id: combined.id, name: combined.name };
+                }
+            }
+
+            // Prioritas 2: cari ID numerik murni (bukan kode rack/zone) dan nama teks kurir
+            for (const v of values) {
+                if (v === undefined || v === null) continue;
+                const s = String(v).trim();
+                if (!s || isZoneOrRackCode(s)) continue;
                 if (!id && /^\d{4,12}$/.test(s)) {
                     id = s;
                     continue;
@@ -1626,22 +1672,30 @@
                             'nama', 'name', 'driver', 'courier', 'fleet', 'kurir'
                         ], '')).trim();
 
+                        // Jika rawId berisi format "[1041055] ABDUL WAFI" atau bukan angka murni
+                        if (rawId) {
+                            const idCombined = parseCombinedIdName(rawId);
+                            if (idCombined.id) {
+                                rawId = idCombined.id;
+                                if (!rawName && idCombined.name) rawName = idCombined.name;
+                            } else if (isZoneOrRackCode(rawId)) {
+                                rawId = '';
+                            }
+                        }
+
+                        // Jika rawName berisi format "[1041055] ABDUL WAFI" atau "1041055 - ABDUL WAFI"
+                        if (rawName) {
+                            const nameCombined = parseCombinedIdName(rawName);
+                            if (nameCombined.id) {
+                                if (!rawId) rawId = nameCombined.id;
+                                rawName = nameCombined.name;
+                            }
+                        }
+
                         if (!rawId || !rawName) {
                             const fb = extractFallbackIdentity(r, norm);
                             if (!rawId && fb.id) rawId = fb.id;
                             if (!rawName && fb.name) rawName = fb.name;
-                        }
-
-                        const bracketMatch = rawName.match(/^\[(\d+)\]\s*(.+)$/);
-                        if (bracketMatch) {
-                            if (!rawId) rawId = bracketMatch[1];
-                            rawName = bracketMatch[2].trim();
-                        } else if (!rawId) {
-                            const dashMatch = rawName.match(/^(\d{4,})\s*[-–:]\s*(.+)$/);
-                            if (dashMatch) {
-                                rawId = dashMatch[1];
-                                rawName = dashMatch[2].trim();
-                            }
                         }
 
                         const lowerName = rawName.toLowerCase();
