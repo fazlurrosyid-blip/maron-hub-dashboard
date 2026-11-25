@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daily Monitoring Performance Maron Hub</title>
+    <!-- Favicon Tab Browser: otomatis ikut Logo Hub / fallback SVG -->
+    <link id="browserFavicon" rel="icon" type="image/png" href="Logo SPX Express Maroon Jatim V.png">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- SheetJS untuk membaca & mengekspor Excel/CSV -->
@@ -1587,6 +1589,18 @@
             if (!imgEl || imgEl.dataset.fallbackApplied === '1') return;
             imgEl.dataset.fallbackApplied = '1';
             imgEl.src = 'https://placehold.co/240x80/7f1d1d/fde047?text=SPX+MARON+JATIM+V';
+            const fav = document.getElementById('browserFavicon');
+            if (fav && !localStorage.getItem('maron_hub_custom_logo_v1')) {
+                fav.type = 'image/svg+xml';
+                fav.href = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#7f1d1d"/><circle cx="32" cy="26" r="10" fill="#fbbf24"/><path d="M16 50c2-9 10-14 16-14s14 5 16 14" fill="#f97316"/></svg>');
+            }
+        }
+
+        function syncFavicon(dataUrl) {
+            const fav = document.getElementById('browserFavicon');
+            if (!fav || !dataUrl) return;
+            fav.type = 'image/png';
+            fav.href = dataUrl;
         }
 
         function handleLogoUpload(event) {
@@ -1603,10 +1617,11 @@
                         el.src = dataUrl;
                     }
                 });
+                syncFavicon(dataUrl);
                 try {
                     localStorage.setItem('maron_hub_custom_logo_v1', dataUrl);
                 } catch (err) {}
-                showToast('Logo Maron Hub berhasil diperbarui!');
+                showToast('Logo & ikon tab Maron Hub berhasil diperbarui!');
             };
             reader.readAsDataURL(file);
             event.target.value = '';
@@ -1662,6 +1677,7 @@
                             el.src = savedLogo;
                         }
                     });
+                    syncFavicon(savedLogo);
                 }
                 const savedTheme = localStorage.getItem('maron_hub_theme_v1');
                 if (savedTheme === 'executive' || savedTheme === 'classic') {
