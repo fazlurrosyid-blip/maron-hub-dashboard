@@ -495,7 +495,7 @@
                 <!-- Filter & Search Bar -->
                 <div class="bg-slate-900/90 text-white p-3 rounded-lg mb-3 flex flex-wrap items-center justify-between gap-3 border border-slate-700">
                     <div class="flex flex-wrap items-center gap-2">
-                        <input type="text" id="searchCourierInput" onkeyup="renderProgressTable()" placeholder="Cari Nama Kurir..." class="bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-blue-400 w-52">
+                        <input type="text" id="searchCourierInput" onkeyup="renderProgressTable()" placeholder="Cari Nama atau Kode Zone..." class="bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-blue-400 w-56">
                         
                         <select id="filterZoneSelect" onchange="renderProgressTable()" class="bg-slate-800 border border-slate-600 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none">
                             <option value="ALL">Semua Zone (District)</option>
@@ -507,9 +507,10 @@
                         <select id="filterTitleSelect" onchange="renderProgressTable()" class="bg-slate-800 border border-slate-600 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none">
                             <option value="ALL">Semua Title</option>
                             <option value="Rider Dedicated">Rider Dedicated</option>
-                            <option value="Mitra Plus">Mitra Plus</option>
+                            <option value="Rider Plus">Rider Plus</option>
                             <option value="Rider Mitra">Rider Mitra</option>
                             <option value="Driver Dedicated">Driver Dedicated</option>
+                            <option value="Driver Plus">Driver Plus</option>
                             <option value="Driver Mitra">Driver Mitra</option>
                         </select>
 
@@ -550,7 +551,7 @@
                             <tr>
                                 <th class="text-left min-w-[210px]">Nama</th>
                                 <th class="text-center w-32">TITLE</th>
-                                <th class="text-center w-24">Zone</th>
+                                <th class="text-center w-28">Zone</th>
                                 <th class="text-center w-20">Assigned</th>
                                 <th class="text-center w-20">Delivering</th>
                                 <th class="text-center w-28">Delivered</th>
@@ -623,78 +624,126 @@
         const DISTRICTS = ['KRUCIL', 'TIRIS', 'MARON'];
         const TITLES = [
             'Rider Dedicated',
-            'Mitra Plus',
+            'Rider Plus',
             'Rider Mitra',
             'Driver Dedicated',
+            'Driver Plus',
             'Driver Mitra'
         ];
 
+        function normalizeTitleValue(rawTitle, fallbackTitle = 'Rider Dedicated') {
+            const s = String(rawTitle || '').trim();
+            if (!s) return normalizeTitleValue(fallbackTitle, 'Rider Dedicated');
+
+            const exact = TITLES.find(t => t.toLowerCase() === s.toLowerCase());
+            if (exact) return exact;
+
+            const upper = s.toUpperCase();
+            const isDriver = /\b4W(H)?\b|\bDRIVER\b|\bVAN\b|\bTRUCK\b|\bMOBIL\b/.test(upper);
+            const isRider = /\b2W(H)?\b|\bRIDER\b|\bMOTOR\b|\bBIKE\b/.test(upper);
+
+            const prefix = isDriver && !isRider
+                ? 'Driver'
+                : (!isDriver && isRider
+                    ? 'Rider'
+                    : (String(fallbackTitle || '').toLowerCase().startsWith('driver') ? 'Driver' : 'Rider'));
+
+            if (/\bPLUS\b/.test(upper)) return `${prefix} Plus`;
+            if (/\bMITRA\b/.test(upper)) return `${prefix} Mitra`;
+            if (/\bDEDICATED\b/.test(upper)) return `${prefix} Dedicated`;
+
+            return `${prefix} Dedicated`;
+        }
+
         const DEFAULT_COURIER_DATA = [
             // TIRIS (19 kurir)
-            { id: '559336', name: 'WAHYU ARGA DINATA', title: 'Rider Dedicated', zone: 'TIRIS', assigned: 127, delivering: 0, delivered: 127, onhold: 0, desc: 'FINAL' },
-            { id: '592876', name: 'MOHAMMAD ISHAQ', title: 'Rider Dedicated', zone: 'TIRIS', assigned: 189, delivering: 0, delivered: 189, onhold: 0, desc: 'FINAL' },
-            { id: '736882', name: 'JUNAIDI', title: 'Rider Dedicated', zone: 'TIRIS', assigned: 116, delivering: 0, delivered: 113, onhold: 3, desc: 'FINAL' },
-            { id: '812198', name: 'KANZUL FIKRI', title: 'Rider Dedicated', zone: 'TIRIS', assigned: 171, delivering: 0, delivered: 171, onhold: 0, desc: 'FINAL' },
-            { id: '834937', name: 'MOH. ZAINAL ARIFIN', title: 'Rider Dedicated', zone: 'TIRIS', assigned: 174, delivering: 0, delivered: 164, onhold: 10, desc: 'FINAL' },
-            { id: '838105', name: 'HASAN SAIFUL ASRI', title: 'Rider Dedicated', zone: 'TIRIS', assigned: 162, delivering: 0, delivered: 148, onhold: 14, desc: 'FINAL' },
-            { id: '858286', name: 'AHMAD RONI', title: 'Rider Dedicated', zone: 'TIRIS', assigned: 151, delivering: 0, delivered: 151, onhold: 0, desc: 'FINAL' },
-            { id: '902181', name: 'JAILANI ABDILLAH', title: 'Rider Dedicated', zone: 'TIRIS', assigned: 144, delivering: 0, delivered: 138, onhold: 6, desc: 'FINAL' },
-            { id: '910761', name: 'KHAIRUL ANAM', title: 'Rider Dedicated', zone: 'TIRIS', assigned: 173, delivering: 0, delivered: 172, onhold: 1, desc: 'FINAL' },
-            { id: '1050960', name: 'ABDUL ALIM', title: 'Mitra Plus', zone: 'TIRIS', assigned: 128, delivering: 0, delivered: 128, onhold: 0, desc: 'FINAL' },
-            { id: '1080095', name: 'RIKI FASRIANDI', title: 'Mitra Plus', zone: 'TIRIS', assigned: 124, delivering: 0, delivered: 122, onhold: 2, desc: 'FINAL' },
-            { id: '1117097', name: "ROHIDISA'DI", title: 'Rider Mitra', zone: 'TIRIS', assigned: 98, delivering: 0, delivered: 96, onhold: 2, desc: 'FINAL' },
-            { id: '1283344', name: 'BURHANUDDIN', title: 'Driver Mitra', zone: 'TIRIS', assigned: 37, delivering: 0, delivered: 37, onhold: 0, desc: 'FINAL' },
-            { id: '1325841', name: 'FATHUL MUIN', title: 'Rider Dedicated', zone: 'TIRIS', assigned: 219, delivering: 0, delivered: 204, onhold: 15, desc: 'FINAL' },
-            { id: '1364070', name: 'MOH IMRON', title: 'Mitra Plus', zone: 'TIRIS', assigned: 98, delivering: 0, delivered: 98, onhold: 0, desc: 'FINAL' },
-            { id: '1367050', name: 'FAISAL FIRDAUS', title: 'Mitra Plus', zone: 'TIRIS', assigned: 83, delivering: 0, delivered: 77, onhold: 6, desc: 'FINAL' },
-            { id: '1372966', name: 'DWI AGUSTIAN', title: 'Rider Mitra', zone: 'TIRIS', assigned: 73, delivering: 0, delivered: 64, onhold: 9, desc: 'FINAL' },
-            { id: '596519', name: 'SHOLEHUDDIN', title: 'Rider Dedicated', zone: 'TIRIS', assigned: 116, delivering: 1, delivered: 113, onhold: 2, desc: 'FOLLOW UP' },
-            { id: '1054041', name: 'FAISOL HAMAMBI', title: 'Driver Dedicated', zone: 'TIRIS', assigned: 49, delivering: 41, delivered: 8, onhold: 0, desc: 'FOLLOW UP' },
+            { id: '559336', name: 'WAHYU ARGA DINATA', title: 'Rider Dedicated', zone: 'TIRIS', zoneCode: 'OON-B-01', assigned: 127, delivering: 0, delivered: 127, onhold: 0, desc: 'FINAL' },
+            { id: '592876', name: 'MOHAMMAD ISHAQ', title: 'Rider Dedicated', zone: 'TIRIS', zoneCode: 'OON-B-02', assigned: 189, delivering: 0, delivered: 189, onhold: 0, desc: 'FINAL' },
+            { id: '736882', name: 'JUNAIDI', title: 'Rider Dedicated', zone: 'TIRIS', zoneCode: 'OON-B-03', assigned: 116, delivering: 0, delivered: 113, onhold: 3, desc: 'FINAL' },
+            { id: '812198', name: 'KANZUL FIKRI', title: 'Rider Dedicated', zone: 'TIRIS', zoneCode: 'OON-B-04', assigned: 171, delivering: 0, delivered: 171, onhold: 0, desc: 'FINAL' },
+            { id: '834937', name: 'MOH. ZAINAL ARIFIN', title: 'Rider Dedicated', zone: 'TIRIS', zoneCode: 'OON-B-05', assigned: 174, delivering: 0, delivered: 164, onhold: 10, desc: 'FINAL' },
+            { id: '838105', name: 'HASAN SAIFUL ASRI', title: 'Rider Dedicated', zone: 'TIRIS', zoneCode: 'OON-B-06', assigned: 162, delivering: 0, delivered: 148, onhold: 14, desc: 'FINAL' },
+            { id: '858286', name: 'AHMAD RONI', title: 'Rider Dedicated', zone: 'TIRIS', zoneCode: 'OON-B-07', assigned: 151, delivering: 0, delivered: 151, onhold: 0, desc: 'FINAL' },
+            { id: '902181', name: 'JAILANI ABDILLAH', title: 'Rider Dedicated', zone: 'TIRIS', zoneCode: 'OON-B-08', assigned: 144, delivering: 0, delivered: 138, onhold: 6, desc: 'FINAL' },
+            { id: '910761', name: 'KHAIRUL ANAM', title: 'Rider Dedicated', zone: 'TIRIS', zoneCode: 'OON-B-09', assigned: 173, delivering: 0, delivered: 172, onhold: 1, desc: 'FINAL' },
+            { id: '1050960', name: 'ABDUL ALIM', title: 'Rider Plus', zone: 'TIRIS', zoneCode: 'OON-B-10', assigned: 128, delivering: 0, delivered: 128, onhold: 0, desc: 'FINAL' },
+            { id: '1080095', name: 'RIKI FASRIANDI', title: 'Rider Plus', zone: 'TIRIS', zoneCode: 'OON-B-11', assigned: 124, delivering: 0, delivered: 122, onhold: 2, desc: 'FINAL' },
+            { id: '1117097', name: "ROHIDISA'DI", title: 'Rider Mitra', zone: 'TIRIS', zoneCode: 'OON-B-12', assigned: 98, delivering: 0, delivered: 96, onhold: 2, desc: 'FINAL' },
+            { id: '1283344', name: 'BURHANUDDIN', title: 'Driver Mitra', zone: 'TIRIS', zoneCode: 'OON-B-01', assigned: 37, delivering: 0, delivered: 37, onhold: 0, desc: 'FINAL' },
+            { id: '1325841', name: 'FATHUL MUIN', title: 'Rider Dedicated', zone: 'TIRIS', zoneCode: 'OON-B-02', assigned: 219, delivering: 0, delivered: 204, onhold: 15, desc: 'FINAL' },
+            { id: '1364070', name: 'MOH IMRON', title: 'Rider Plus', zone: 'TIRIS', zoneCode: 'OON-B-03', assigned: 98, delivering: 0, delivered: 98, onhold: 0, desc: 'FINAL' },
+            { id: '1367050', name: 'FAISAL FIRDAUS', title: 'Rider Plus', zone: 'TIRIS', zoneCode: 'OON-B-04', assigned: 83, delivering: 0, delivered: 77, onhold: 6, desc: 'FINAL' },
+            { id: '1372966', name: 'DWI AGUSTIAN', title: 'Rider Mitra', zone: 'TIRIS', zoneCode: 'OON-B-05', assigned: 73, delivering: 0, delivered: 64, onhold: 9, desc: 'FINAL' },
+            { id: '596519', name: 'SHOLEHUDDIN', title: 'Rider Dedicated', zone: 'TIRIS', zoneCode: 'OON-B-06', assigned: 116, delivering: 1, delivered: 113, onhold: 2, desc: 'FOLLOW UP' },
+            { id: '1054041', name: 'FAISOL HAMAMBI', title: 'Driver Dedicated', zone: 'TIRIS', zoneCode: 'OON-B-07', assigned: 49, delivering: 41, delivered: 8, onhold: 0, desc: 'FOLLOW UP' },
 
             // MARON (25 kurir)
-            { id: '363357', name: 'ALIHUR ROZIM', title: 'Rider Dedicated', zone: 'MARON', assigned: 140, delivering: 0, delivered: 140, onhold: 0, desc: 'FINAL' },
-            { id: '386724', name: 'HERMANTO', title: 'Rider Dedicated', zone: 'MARON', assigned: 119, delivering: 0, delivered: 119, onhold: 0, desc: 'FINAL' },
-            { id: '493495', name: 'M. SHOLIHIN', title: 'Rider Dedicated', zone: 'MARON', assigned: 127, delivering: 0, delivered: 127, onhold: 0, desc: 'FINAL' },
-            { id: '552828', name: 'RIYAN HIDAYAT', title: 'Rider Dedicated', zone: 'MARON', assigned: 153, delivering: 0, delivered: 153, onhold: 0, desc: 'FINAL' },
-            { id: '598881', name: 'HUSEN', title: 'Rider Dedicated', zone: 'MARON', assigned: 204, delivering: 0, delivered: 204, onhold: 0, desc: 'FINAL' },
-            { id: '606314', name: 'IMRON ABDUL AZIZ', title: 'Rider Dedicated', zone: 'MARON', assigned: 180, delivering: 0, delivered: 180, onhold: 0, desc: 'FINAL' },
-            { id: '656641', name: 'MUHAMMAD FIANSAH', title: 'Rider Dedicated', zone: 'MARON', assigned: 143, delivering: 0, delivered: 142, onhold: 1, desc: 'FINAL' },
-            { id: '679688', name: 'NOREGA SATRIA WIBOWO', title: 'Rider Dedicated', zone: 'MARON', assigned: 129, delivering: 0, delivered: 125, onhold: 4, desc: 'FINAL' },
-            { id: '702339', name: 'RAHMAD AL FARIZI', title: 'Rider Dedicated', zone: 'MARON', assigned: 187, delivering: 0, delivered: 187, onhold: 0, desc: 'FINAL' },
-            { id: '736813', name: 'KHOIRUT TAMAM', title: 'Rider Dedicated', zone: 'MARON', assigned: 176, delivering: 0, delivered: 176, onhold: 0, desc: 'FINAL' },
-            { id: '829634', name: 'MAULANA ISHAQ', title: 'Rider Dedicated', zone: 'MARON', assigned: 147, delivering: 0, delivered: 147, onhold: 0, desc: 'FINAL' },
-            { id: '841006', name: 'M EKO RIZKI', title: 'Rider Dedicated', zone: 'MARON', assigned: 138, delivering: 0, delivered: 138, onhold: 0, desc: 'FINAL' },
-            { id: '942936', name: 'WAHYU ANGGONO', title: 'Driver Mitra', zone: 'MARON', assigned: 65, delivering: 0, delivered: 65, onhold: 0, desc: 'FINAL' },
-            { id: '958393', name: 'ILZEM', title: 'Driver Mitra', zone: 'MARON', assigned: 10, delivering: 0, delivered: 10, onhold: 0, desc: 'FINAL' },
-            { id: '983152', name: 'NAWAWI', title: 'Driver Mitra', zone: 'MARON', assigned: 30, delivering: 0, delivered: 30, onhold: 0, desc: 'FINAL' },
-            { id: '1036888', name: 'M. SYAHRULLOH', title: 'Mitra Plus', zone: 'MARON', assigned: 165, delivering: 0, delivered: 165, onhold: 0, desc: 'FINAL' },
-            { id: '1041055', name: 'ABDUL WAFI', title: 'Mitra Plus', zone: 'MARON', assigned: 141, delivering: 0, delivered: 141, onhold: 0, desc: 'FINAL' },
-            { id: '1044770', name: 'MOH. ALI AKBAR', title: 'Mitra Plus', zone: 'MARON', assigned: 115, delivering: 0, delivered: 115, onhold: 0, desc: 'FINAL' },
-            { id: '1046755', name: 'ABDUL HAKIM', title: 'Mitra Plus', zone: 'MARON', assigned: 117, delivering: 0, delivered: 116, onhold: 1, desc: 'FINAL' },
-            { id: '1049615', name: 'ABD WARAS', title: 'Mitra Plus', zone: 'MARON', assigned: 99, delivering: 0, delivered: 99, onhold: 0, desc: 'FINAL' },
-            { id: '1074600', name: 'NIZAR ZULMI', title: 'Mitra Plus', zone: 'MARON', assigned: 122, delivering: 0, delivered: 122, onhold: 0, desc: 'FINAL' },
-            { id: '1078097', name: 'MUHAMMAD HILALUL FITRAH', title: 'Mitra Plus', zone: 'MARON', assigned: 126, delivering: 0, delivered: 124, onhold: 2, desc: 'FINAL' },
-            { id: '1085385', name: 'RONI WIJAYA', title: 'Mitra Plus', zone: 'MARON', assigned: 98, delivering: 0, delivered: 97, onhold: 1, desc: 'FINAL' },
-            { id: '1090394', name: 'MOH ANGGA DIANPRATAMA', title: 'Mitra Plus', zone: 'MARON', assigned: 135, delivering: 0, delivered: 135, onhold: 0, desc: 'FINAL' },
-            { id: '1127545', name: 'ABD HAMID MANSUR', title: 'Driver Mitra', zone: 'MARON', assigned: 10, delivering: 0, delivered: 10, onhold: 0, desc: 'FINAL' },
+            { id: '363357', name: 'ALIHUR ROZIM', title: 'Rider Dedicated', zone: 'MARON', zoneCode: 'OON-A-01', assigned: 140, delivering: 0, delivered: 140, onhold: 0, desc: 'FINAL' },
+            { id: '386724', name: 'HERMANTO', title: 'Rider Dedicated', zone: 'MARON', zoneCode: 'OON-A-02', assigned: 119, delivering: 0, delivered: 119, onhold: 0, desc: 'FINAL' },
+            { id: '493495', name: 'M. SHOLIHIN', title: 'Rider Dedicated', zone: 'MARON', zoneCode: 'OON-A-03', assigned: 127, delivering: 0, delivered: 127, onhold: 0, desc: 'FINAL' },
+            { id: '552828', name: 'RIYAN HIDAYAT', title: 'Rider Dedicated', zone: 'MARON', zoneCode: 'OON-A-04', assigned: 153, delivering: 0, delivered: 153, onhold: 0, desc: 'FINAL' },
+            { id: '598881', name: 'HUSEN', title: 'Rider Dedicated', zone: 'MARON', zoneCode: 'OON-A-05', assigned: 204, delivering: 0, delivered: 204, onhold: 0, desc: 'FINAL' },
+            { id: '606314', name: 'IMRON ABDUL AZIZ', title: 'Rider Dedicated', zone: 'MARON', zoneCode: 'OON-A-06', assigned: 180, delivering: 0, delivered: 180, onhold: 0, desc: 'FINAL' },
+            { id: '656641', name: 'MUHAMMAD FIANSAH', title: 'Rider Dedicated', zone: 'MARON', zoneCode: 'OON-A-07', assigned: 143, delivering: 0, delivered: 142, onhold: 1, desc: 'FINAL' },
+            { id: '679688', name: 'NOREGA SATRIA WIBOWO', title: 'Rider Dedicated', zone: 'MARON', zoneCode: 'OON-A-08', assigned: 129, delivering: 0, delivered: 125, onhold: 4, desc: 'FINAL' },
+            { id: '702339', name: 'RAHMAD AL FARIZI', title: 'Rider Dedicated', zone: 'MARON', zoneCode: 'OON-A-09', assigned: 187, delivering: 0, delivered: 187, onhold: 0, desc: 'FINAL' },
+            { id: '736813', name: 'KHOIRUT TAMAM', title: 'Rider Dedicated', zone: 'MARON', zoneCode: 'OON-A-10', assigned: 176, delivering: 0, delivered: 176, onhold: 0, desc: 'FINAL' },
+            { id: '829634', name: 'MAULANA ISHAQ', title: 'Rider Dedicated', zone: 'MARON', zoneCode: 'OON-A-11', assigned: 147, delivering: 0, delivered: 147, onhold: 0, desc: 'FINAL' },
+            { id: '841006', name: 'M EKO RIZKI', title: 'Rider Dedicated', zone: 'MARON', zoneCode: 'OON-A-12', assigned: 138, delivering: 0, delivered: 138, onhold: 0, desc: 'FINAL' },
+            { id: '942936', name: 'WAHYU ANGGONO', title: 'Driver Mitra', zone: 'MARON', zoneCode: 'OON-A-13', assigned: 65, delivering: 0, delivered: 65, onhold: 0, desc: 'FINAL' },
+            { id: '958393', name: 'ILZEM', title: 'Driver Mitra', zone: 'MARON', zoneCode: 'OON-A-14', assigned: 10, delivering: 0, delivered: 10, onhold: 0, desc: 'FINAL' },
+            { id: '983152', name: 'NAWAWI', title: 'Driver Mitra', zone: 'MARON', zoneCode: 'OON-A-15', assigned: 30, delivering: 0, delivered: 30, onhold: 0, desc: 'FINAL' },
+            { id: '1036888', name: 'M. SYAHRULLOH', title: 'Rider Plus', zone: 'MARON', zoneCode: 'OON-A-16', assigned: 165, delivering: 0, delivered: 165, onhold: 0, desc: 'FINAL' },
+            { id: '1041055', name: 'ABDUL WAFI', title: 'Rider Plus', zone: 'MARON', zoneCode: 'OON-A-01', assigned: 141, delivering: 0, delivered: 141, onhold: 0, desc: 'FINAL' },
+            { id: '1044770', name: 'MOH. ALI AKBAR', title: 'Rider Plus', zone: 'MARON', zoneCode: 'OON-A-02', assigned: 115, delivering: 0, delivered: 115, onhold: 0, desc: 'FINAL' },
+            { id: '1046755', name: 'ABDUL HAKIM', title: 'Rider Plus', zone: 'MARON', zoneCode: 'OON-A-03', assigned: 117, delivering: 0, delivered: 116, onhold: 1, desc: 'FINAL' },
+            { id: '1049615', name: 'ABD WARAS', title: 'Rider Plus', zone: 'MARON', zoneCode: 'OON-A-04', assigned: 99, delivering: 0, delivered: 99, onhold: 0, desc: 'FINAL' },
+            { id: '1074600', name: 'NIZAR ZULMI', title: 'Rider Plus', zone: 'MARON', zoneCode: 'OON-A-05', assigned: 122, delivering: 0, delivered: 122, onhold: 0, desc: 'FINAL' },
+            { id: '1078097', name: 'MUHAMMAD HILALUL FITRAH', title: 'Rider Plus', zone: 'MARON', zoneCode: 'OON-A-06', assigned: 126, delivering: 0, delivered: 124, onhold: 2, desc: 'FINAL' },
+            { id: '1085385', name: 'RONI WIJAYA', title: 'Rider Plus', zone: 'MARON', zoneCode: 'OON-A-07', assigned: 98, delivering: 0, delivered: 97, onhold: 1, desc: 'FINAL' },
+            { id: '1090394', name: 'MOH ANGGA DIANPRATAMA', title: 'Rider Plus', zone: 'MARON', zoneCode: 'OON-A-08', assigned: 135, delivering: 0, delivered: 135, onhold: 0, desc: 'FINAL' },
+            { id: '1127545', name: 'ABD HAMID MANSUR', title: 'Driver Mitra', zone: 'MARON', zoneCode: 'OON-A-09', assigned: 10, delivering: 0, delivered: 10, onhold: 0, desc: 'FINAL' },
 
             // KRUCIL (15 kurir)
-            { id: '540295', name: 'MOHAMMAD ALFAN FATONI', title: 'Rider Dedicated', zone: 'KRUCIL', assigned: 180, delivering: 0, delivered: 179, onhold: 1, desc: 'FINAL' },
-            { id: '611528', name: 'NANANG KOSIM', title: 'Rider Dedicated', zone: 'KRUCIL', assigned: 141, delivering: 0, delivered: 134, onhold: 7, desc: 'FINAL' },
-            { id: '617201', name: 'KHOIRUL ANAM', title: 'Rider Dedicated', zone: 'KRUCIL', assigned: 172, delivering: 0, delivered: 163, onhold: 9, desc: 'FINAL' },
-            { id: '659043', name: 'AGUS ARI SETIAWAN', title: 'Rider Dedicated', zone: 'KRUCIL', assigned: 167, delivering: 0, delivered: 167, onhold: 0, desc: 'FINAL' },
-            { id: '726092', name: 'DIMAS ARIFIN', title: 'Rider Dedicated', zone: 'KRUCIL', assigned: 205, delivering: 0, delivered: 204, onhold: 1, desc: 'FINAL' },
-            { id: '738931', name: 'RIGA AGUSTIN', title: 'Rider Dedicated', zone: 'KRUCIL', assigned: 190, delivering: 0, delivered: 171, onhold: 19, desc: 'FINAL' },
-            { id: '766398', name: 'CHANDRA PRAYOGI', title: 'Rider Dedicated', zone: 'KRUCIL', assigned: 223, delivering: 0, delivered: 196, onhold: 27, desc: 'FINAL' },
-            { id: '829649', name: 'AHMAD SALIM', title: 'Rider Dedicated', zone: 'KRUCIL', assigned: 253, delivering: 0, delivered: 225, onhold: 28, desc: 'FINAL' },
-            { id: '886150', name: 'INSAN ABDULLAH', title: 'Rider Dedicated', zone: 'KRUCIL', assigned: 162, delivering: 0, delivered: 153, onhold: 9, desc: 'FINAL' },
-            { id: '1231045', name: 'ABDUL QODIR', title: 'Mitra Plus', zone: 'KRUCIL', assigned: 168, delivering: 0, delivered: 133, onhold: 35, desc: 'FINAL' },
-            { id: '1274265', name: 'MOHAMMAD YENDRI', title: 'Mitra Plus', zone: 'KRUCIL', assigned: 97, delivering: 0, delivered: 84, onhold: 13, desc: 'FINAL' },
-            { id: '1356387', name: 'SEPTIAN HOFIFI ALAM', title: 'Mitra Plus', zone: 'KRUCIL', assigned: 165, delivering: 0, delivered: 146, onhold: 19, desc: 'FINAL' },
-            { id: '1409409', name: 'M. YUNUS', title: 'Rider Mitra', zone: 'KRUCIL', assigned: 101, delivering: 0, delivered: 94, onhold: 7, desc: 'FINAL' },
-            { id: '1417577', name: 'ABDUL WAHID HASYIM', title: 'Rider Mitra', zone: 'KRUCIL', assigned: 46, delivering: 0, delivered: 45, onhold: 1, desc: 'FINAL' },
-            { id: '1418990', name: 'HAKKULLAH FIRDAUS', title: 'Rider Mitra', zone: 'KRUCIL', assigned: 121, delivering: 0, delivered: 59, onhold: 62, desc: 'FINAL' }
+            { id: '540295', name: 'MOHAMMAD ALFAN FATONI', title: 'Rider Dedicated', zone: 'KRUCIL', zoneCode: 'OON-C-01', assigned: 180, delivering: 0, delivered: 179, onhold: 1, desc: 'FINAL' },
+            { id: '611528', name: 'NANANG KOSIM', title: 'Rider Dedicated', zone: 'KRUCIL', zoneCode: 'OON-C-02', assigned: 141, delivering: 0, delivered: 134, onhold: 7, desc: 'FINAL' },
+            { id: '617201', name: 'KHOIRUL ANAM', title: 'Rider Dedicated', zone: 'KRUCIL', zoneCode: 'OON-C-03', assigned: 172, delivering: 0, delivered: 163, onhold: 9, desc: 'FINAL' },
+            { id: '659043', name: 'AGUS ARI SETIAWAN', title: 'Rider Dedicated', zone: 'KRUCIL', zoneCode: 'OON-C-04', assigned: 167, delivering: 0, delivered: 167, onhold: 0, desc: 'FINAL' },
+            { id: '726092', name: 'DIMAS ARIFIN', title: 'Rider Dedicated', zone: 'KRUCIL', zoneCode: 'OON-C-05', assigned: 205, delivering: 0, delivered: 204, onhold: 1, desc: 'FINAL' },
+            { id: '738931', name: 'RIGA AGUSTIN', title: 'Rider Dedicated', zone: 'KRUCIL', zoneCode: 'OON-C-06', assigned: 190, delivering: 0, delivered: 171, onhold: 19, desc: 'FINAL' },
+            { id: '766398', name: 'CHANDRA PRAYOGI', title: 'Rider Dedicated', zone: 'KRUCIL', zoneCode: 'OON-C-07', assigned: 223, delivering: 0, delivered: 196, onhold: 27, desc: 'FINAL' },
+            { id: '829649', name: 'AHMAD SALIM', title: 'Rider Dedicated', zone: 'KRUCIL', zoneCode: 'OON-C-08', assigned: 253, delivering: 0, delivered: 225, onhold: 28, desc: 'FINAL' },
+            { id: '886150', name: 'INSAN ABDULLAH', title: 'Rider Dedicated', zone: 'KRUCIL', zoneCode: 'OON-C-09', assigned: 162, delivering: 0, delivered: 153, onhold: 9, desc: 'FINAL' },
+            { id: '1231045', name: 'ABDUL QODIR', title: 'Rider Plus', zone: 'KRUCIL', zoneCode: 'OON-C-10', assigned: 168, delivering: 0, delivered: 133, onhold: 35, desc: 'FINAL' },
+            { id: '1274265', name: 'MOHAMMAD YENDRI', title: 'Rider Plus', zone: 'KRUCIL', zoneCode: 'OON-C-11', assigned: 97, delivering: 0, delivered: 84, onhold: 13, desc: 'FINAL' },
+            { id: '1356387', name: 'SEPTIAN HOFIFI ALAM', title: 'Rider Plus', zone: 'KRUCIL', zoneCode: 'OON-C-12', assigned: 165, delivering: 0, delivered: 146, onhold: 19, desc: 'FINAL' },
+            { id: '1409409', name: 'M. YUNUS', title: 'Rider Mitra', zone: 'KRUCIL', zoneCode: 'OON-C-13', assigned: 101, delivering: 0, delivered: 94, onhold: 7, desc: 'FINAL' },
+            { id: '1417577', name: 'ABDUL WAHID HASYIM', title: 'Rider Mitra', zone: 'KRUCIL', zoneCode: 'OON-C-01', assigned: 46, delivering: 0, delivered: 45, onhold: 1, desc: 'FINAL' },
+            { id: '1418990', name: 'HAKKULLAH FIRDAUS', title: 'Rider Mitra', zone: 'KRUCIL', zoneCode: 'OON-C-02', assigned: 121, delivering: 0, delivered: 59, onhold: 62, desc: 'FINAL' }
         ];
+
+        function resolveDistrictFromZoneCode(rawCode) {
+            const cleaned = String(rawCode || '').trim().toUpperCase();
+            if (!cleaned) return null;
+
+            const match = cleaned.match(/OON[-_]?([ABC])[-_]?(\d{1,3})/i);
+            if (!match) return null;
+
+            const prefix = match[1].toUpperCase();
+            const num = parseInt(match[2], 10);
+            if (!Number.isFinite(num)) return null;
+
+            if (prefix === 'A' && num >= 1 && num <= 16) return 'MARON';
+            if (prefix === 'B' && num >= 1 && num <= 12) return 'TIRIS';
+            if (prefix === 'C' && num >= 1 && num <= 13) return 'KRUCIL';
+            return null;
+        }
+
+        function formatZoneDisplay(row) {
+            const district = String(row?.zone || '').trim().toUpperCase() || resolveDistrictFromZoneCode(row?.zoneCode) || 'MARON';
+            const code = String(row?.zoneCode || '').trim().toUpperCase();
+            return code ? `${district} (${code})` : district;
+        }
 
         let courierData = JSON.parse(JSON.stringify(DEFAULT_COURIER_DATA));
         let masterKurir = [];
@@ -723,7 +772,14 @@
                 if (!raw) return;
                 const parsed = JSON.parse(raw);
                 if (Array.isArray(parsed) && parsed.length > 0) {
-                    courierData = parsed;
+                    courierData = parsed.map(r => {
+                        const mappedZone = resolveDistrictFromZoneCode(r.zoneCode) || resolveDistrictFromZoneCode(r.zone);
+                        return {
+                            ...r,
+                            title: normalizeTitleValue(r.title, 'Rider Dedicated'),
+                            zone: mappedZone || String(r.zone || 'MARON').trim().toUpperCase()
+                        };
+                    });
                 }
             } catch (e) {
                 console.warn('Gagal memuat data kurir dari localStorage:', e);
@@ -779,7 +835,10 @@
                 if (raw) {
                     const parsed = JSON.parse(raw);
                     if (Array.isArray(parsed) && parsed.length > 0) {
-                        masterKurir = parsed;
+                        masterKurir = parsed.map(m => ({
+                            ...m,
+                            title: normalizeTitleValue(m.title, 'Rider Dedicated')
+                        }));
                         return;
                     }
                 }
@@ -922,7 +981,7 @@
         }
 
         // =========================================================================
-        // 2. DATA AGGREGATION ENGINE
+        // 2. DATA AGGREGATION ENGINE (MPP = JUMLAH KURIR YANG MASUK)
         // =========================================================================
         function computeAggregations(rows) {
             const totalAssigned = rows.reduce((s, r) => s + (Number(r.assigned) || 0), 0);
@@ -932,19 +991,14 @@
             const todayPerformance = totalAssigned > 0 ? (totalDelivered / totalAssigned) * 100 : 0;
 
             const byTitle = TITLES.map(title => {
-                const matching = rows.filter(r => r.title === title);
+                const matching = rows.filter(r => normalizeTitleValue(r.title, 'Rider Dedicated') === title);
                 const assigned = matching.reduce((s, r) => s + (Number(r.assigned) || 0), 0);
                 const delivered = matching.reduce((s, r) => s + (Number(r.delivered) || 0), 0);
                 const onhold = matching.reduce((s, r) => s + (Number(r.onhold) || 0), 0);
                 const perf = assigned > 0 ? (delivered / assigned) * 100 : 0;
 
-                const uniqueIds = new Set(matching.map(r => String(r.id).trim()).filter(Boolean));
-                masterKurir.forEach(m => {
-                    if (m.title === title && rows.some(r => String(r.id).trim() === String(m.id).trim())) {
-                        uniqueIds.add(String(m.id).trim());
-                    }
-                });
-                const mpp = uniqueIds.size > 0 ? uniqueIds.size : (assigned > 0 ? Math.max(1, matching.length) : 0);
+                // MPP = jumlah baris kurir yang masuk pada title ini
+                const mpp = matching.length;
                 const productivity = mpp > 0 ? Math.round(delivered / mpp) : 0;
 
                 return { title, assigned, delivered, onhold, perf, mpp, productivity };
@@ -957,8 +1011,8 @@
                 const onhold = matching.reduce((s, r) => s + (Number(r.onhold) || 0), 0);
                 const perf = assigned > 0 ? (delivered / assigned) * 100 : 0;
 
-                const uniqueIds = new Set(matching.map(r => String(r.id).trim()).filter(Boolean));
-                const mpp = uniqueIds.size > 0 ? uniqueIds.size : (assigned > 0 ? Math.max(1, matching.length) : 0);
+                // MPP = jumlah baris kurir yang masuk pada district ini
+                const mpp = matching.length;
 
                 return { district, assigned, delivered, onhold, perf, mpp };
             });
@@ -968,26 +1022,26 @@
                 const totalOutbond = dRows.reduce((s, r) => s + (Number(r.assigned) || 0), 0);
 
                 const items = TITLES.map(title => {
-                    const cellRows = dRows.filter(r => r.title === title);
+                    const cellRows = dRows.filter(r => normalizeTitleValue(r.title, 'Rider Dedicated') === title);
                     const assigned = cellRows.reduce((s, r) => s + (Number(r.assigned) || 0), 0);
                     const delivered = cellRows.reduce((s, r) => s + (Number(r.delivered) || 0), 0);
                     const onhold = cellRows.reduce((s, r) => s + (Number(r.onhold) || 0), 0);
                     const perf = assigned > 0 ? (delivered / assigned) * 100 : 0;
-                    const ids = new Set(cellRows.map(r => String(r.id).trim()).filter(Boolean));
-                    const mpp = ids.size > 0 ? ids.size : (assigned > 0 ? Math.max(1, cellRows.length) : 0);
+                    // MPP = jumlah baris kurir yang masuk pada kombinasi district & title ini
+                    const mpp = cellRows.length;
                     const allocPct = totalOutbond > 0 ? (assigned / totalOutbond) * 100 : 0;
 
                     return { title, assigned, delivered, onhold, perf, mpp, allocPct };
-                }).filter(item => item.assigned > 0 || item.delivered > 0 || item.onhold > 0 || item.mpp > 0);
+                }).filter(item => item.mpp > 0 || item.assigned > 0 || item.delivered > 0 || item.onhold > 0);
 
                 return { district, totalOutbond, items };
             }).filter(g => g.items.length > 0);
 
             const riderAssigned = rows
-                .filter(r => String(r.title).toLowerCase().includes('rider'))
+                .filter(r => normalizeTitleValue(r.title, 'Rider Dedicated').startsWith('Rider'))
                 .reduce((s, r) => s + (Number(r.assigned) || 0), 0);
             const driverAssigned = rows
-                .filter(r => String(r.title).toLowerCase().includes('driver'))
+                .filter(r => normalizeTitleValue(r.title, 'Rider Dedicated').startsWith('Driver'))
                 .reduce((s, r) => s + (Number(r.assigned) || 0), 0);
             const otherAssigned = Math.max(0, totalAssigned - riderAssigned - driverAssigned);
             const totalRiderOutbond = riderAssigned + otherAssigned;
@@ -1075,7 +1129,7 @@
 
             renderPieChart(agg.totalDelivered, agg.totalDelivering, agg.totalOnhold);
 
-            const activeTitles = agg.byTitle.filter(t => t.assigned > 0 || t.delivered > 0 || t.onhold > 0);
+            const activeTitles = agg.byTitle.filter(t => t.mpp > 0 || t.assigned > 0 || t.delivered > 0 || t.onhold > 0);
             const titleSumAssigned = activeTitles.reduce((s, t) => s + t.assigned, 0);
             const titleSumDelivered = activeTitles.reduce((s, t) => s + t.delivered, 0);
             const titleSumOnhold = activeTitles.reduce((s, t) => s + t.onhold, 0);
@@ -1103,7 +1157,7 @@
                 </tr>
             `;
 
-            const activeAlloc = agg.byTitle.filter(t => t.assigned > 0 || t.delivered > 0 || t.mpp > 0);
+            const activeAlloc = agg.byTitle.filter(t => t.mpp > 0 || t.assigned > 0 || t.delivered > 0);
             const allocSumMpp = activeAlloc.reduce((s, t) => s + t.mpp, 0);
             const allocSumDelivered = activeAlloc.reduce((s, t) => s + t.delivered, 0);
             const allocSumAssigned = activeAlloc.reduce((s, t) => s + t.assigned, 0);
@@ -1132,7 +1186,7 @@
                 </tr>
             `;
 
-            const activeDistricts = agg.byDistrict.filter(d => d.assigned > 0 || d.delivered > 0 || d.onhold > 0);
+            const activeDistricts = agg.byDistrict.filter(d => d.mpp > 0 || d.assigned > 0 || d.delivered > 0 || d.onhold > 0);
             const distSumAssigned = activeDistricts.reduce((s, d) => s + d.assigned, 0);
             const distSumDelivered = activeDistricts.reduce((s, d) => s + d.delivered, 0);
             const distSumOnhold = activeDistricts.reduce((s, d) => s + d.onhold, 0);
@@ -1160,7 +1214,7 @@
                 </tr>
             `;
 
-            const activeDistAlloc = agg.byDistrict.filter(d => d.assigned > 0 || d.mpp > 0);
+            const activeDistAlloc = agg.byDistrict.filter(d => d.mpp > 0 || d.assigned > 0);
             const distAllocMpp = activeDistAlloc.reduce((s, d) => s + d.mpp, 0);
             const distAllocOutbond = activeDistAlloc.reduce((s, d) => s + d.assigned, 0);
 
@@ -1243,12 +1297,12 @@
 
             document.getElementById('tblRiderDriverSummary').innerHTML = `
                 <tr style="background-color: #f1f5f9;">
-                    <td class="text-center font-bold text-slate-900">Rider</td>
+                    <td class="text-center font-bold text-slate-900">Rider (2W)</td>
                     ${renderAllocationCell(riderPct, 'red')}
                     ${renderAllocationCell(riderPct, 'amber')}
                 </tr>
                 <tr style="background-color: #fff8e7;">
-                    <td class="text-center font-bold text-slate-900">Driver</td>
+                    <td class="text-center font-bold text-slate-900">Driver (4W)</td>
                     ${renderAllocationCell(driverPct, 'red')}
                     ${renderAllocationCell(driverPct, 'amber')}
                 </tr>
@@ -1270,9 +1324,12 @@
             const status = document.getElementById('filterStatusSelect')?.value || 'ALL';
 
             const filtered = courierData.filter(row => {
-                const matchText = !q || String(row.name).toLowerCase().includes(q);
+                const zoneLabel = formatZoneDisplay(row).toLowerCase();
+                const matchText = !q ||
+                    String(row.name).toLowerCase().includes(q) ||
+                    zoneLabel.includes(q);
                 const matchZone = zone === 'ALL' || row.zone === zone;
-                const matchTitle = title === 'ALL' || row.title === title;
+                const matchTitle = title === 'ALL' || normalizeTitleValue(row.title, 'Rider Dedicated') === title;
                 const matchStatus = status === 'ALL' || (row.desc || 'FINAL') === status;
                 return matchText && matchZone && matchTitle && matchStatus;
             });
@@ -1288,12 +1345,13 @@
                 const isFollowUp = (row.desc || 'FINAL') === 'FOLLOW UP';
                 const descBg = isFollowUp ? '#fecaca' : '#bbf7d0';
                 const descColor = isFollowUp ? '#7f1d1d' : '#052e16';
+                const displayTitle = normalizeTitleValue(row.title, 'Rider Dedicated');
 
                 return `
                     <tr>
                         <td class="font-semibold">${row.name}</td>
-                        <td class="text-center">${row.title}</td>
-                        <td class="text-center font-bold">${row.zone}</td>
+                        <td class="text-center">${displayTitle}</td>
+                        <td class="text-center font-bold">${formatZoneDisplay(row)}</td>
                         <td class="text-right font-semibold cursor-pointer bg-white" contenteditable="true" onblur="updateCourierMetric(${realIdx}, 'assigned', this.innerText)">${assigned}</td>
                         <td class="text-right font-semibold cursor-pointer bg-white" contenteditable="true" onblur="updateCourierMetric(${realIdx}, 'delivering', this.innerText)">${Number(row.delivering) || 0}</td>
                         <td class="text-right font-semibold cursor-pointer bg-white" contenteditable="true" onblur="updateCourierMetric(${realIdx}, 'delivered', this.innerText)">${delivered}</td>
@@ -1339,6 +1397,7 @@
                 name: 'KURIR BARU',
                 title: 'Rider Dedicated',
                 zone: 'MARON',
+                zoneCode: 'OON-A-01',
                 assigned: 100,
                 delivering: 0,
                 delivered: 100,
@@ -1374,7 +1433,7 @@
                 return {
                     id: cleanId || String(found.id).trim(),
                     name: cleanName || found.name,
-                    title: found.title,
+                    title: normalizeTitleValue(found.title, 'Rider Dedicated'),
                     zone: found.zone
                 };
             }
@@ -1457,7 +1516,21 @@
 
         function isZoneOrRackCode(str) {
             const s = String(str || '').trim();
-            return /^[0-9]{1,3}[A-Z]{1,3}-[A-Z0-9]+-[0-9]+$/i.test(s);
+            return /^[0-9]{1,3}[A-Z]{1,3}-[A-Z0-9]+-[0-9]+$/i.test(s) || /^OON[-_]?[ABC][-_]?\d{1,3}$/i.test(s);
+        }
+
+        function extractZoneCodeFromRow(rawRow, normRow, rawZoneVal) {
+            const directMatch = String(rawZoneVal || '').toUpperCase().match(/OON[-_]?[ABC][-_]?\d{1,3}/i);
+            if (directMatch) {
+                return directMatch[0].replace(/_/g, '-').toUpperCase();
+            }
+            const values = rawRow && typeof rawRow === 'object' ? Object.values(rawRow) : Object.values(normRow);
+            for (const v of values) {
+                if (v === undefined || v === null) continue;
+                const m = String(v).toUpperCase().match(/OON[-_]?[ABC][-_]?\d{1,3}/i);
+                if (m) return m[0].replace(/_/g, '-').toUpperCase();
+            }
+            return '';
         }
 
         function extractFallbackIdentity(rawRow, normRow) {
@@ -1484,7 +1557,7 @@
                     id = s;
                     continue;
                 }
-                if (!name && /[a-zA-Z]{2,}/.test(s) && !/^(final|follow\s*up|krucil|tiris|maron|rider|driver|mitra)/i.test(s)) {
+                if (!name && /[a-zA-Z]{2,}/.test(s) && !/^(final|follow\s*up|krucil|tiris|maron|rider|driver|mitra|plus|dedicated|2w|4w|2wh|4wh)/i.test(s)) {
                     name = s;
                 }
                 if (id && name) break;
@@ -1554,6 +1627,29 @@
                 result.push(obj);
             }
             return result;
+        }
+
+        function resolveCombinedTitleFromRow(norm, fallbackTitle) {
+            const rawTitle = String(pickColumnValue(norm, [
+                'title', 'role', 'jabatan', 'tipe', 'type', 'category', 'kategori'
+            ], '') || pickColumnByFuzzyToken(norm, [
+                'title', 'role', 'type', 'tipe'
+            ], '')).trim();
+
+            const rawVehicle = String(pickColumnValue(norm, [
+                'vehicle', 'kendaraan', 'fleettype', 'armada', 'moda', 'kurir'
+            ], '') || pickColumnByFuzzyToken(norm, [
+                'vehicle', 'kendaraan', 'fleettype', 'armada'
+            ], '')).trim();
+
+            const rawTier = String(pickColumnValue(norm, [
+                'tier', 'skema', 'statuskurir', 'jenis', 'subtipe', 'subtype'
+            ], '')).trim();
+
+            const combined = [rawVehicle, rawTitle, rawTier].filter(Boolean).join(' ').trim();
+            if (!combined) return normalizeTitleValue(fallbackTitle, 'Rider Dedicated');
+
+            return normalizeTitleValue(combined, fallbackTitle);
         }
 
         function handleFileUpload(event) {
@@ -1631,16 +1727,14 @@
                         }
 
                         const mapped = mapCourierMetaFromMaster(rawId, rawName);
+                        const title = resolveCombinedTitleFromRow(norm, mapped.title);
 
-                        const rawTitle = String(pickColumnValue(norm, [
-                            'title', 'role', 'jabatan', 'tipe', 'type', 'category', 'kategori'
-                        ], '')).trim();
-                        const title = rawTitle || mapped.title;
-
-                        const rawZone = String(pickColumnValue(norm, [
+                        const rawZoneInput = String(pickColumnValue(norm, [
                             'zone', 'district', 'area', 'kecamatan', 'wilayah', 'hub', 'station'
                         ], '')).trim().toUpperCase();
-                        const zone = rawZone || mapped.zone;
+                        const zoneCode = extractZoneCodeFromRow(r, norm, rawZoneInput);
+                        const mappedZoneFromCode = resolveDistrictFromZoneCode(zoneCode) || resolveDistrictFromZoneCode(rawZoneInput);
+                        const zone = mappedZoneFromCode || (DISTRICTS.includes(rawZoneInput) ? rawZoneInput : mapped.zone);
 
                         const assigned = parseNumericCell(pickColumnValue(norm, [
                             'assigned', 'outbound', 'outbond', 'totaloutbound', 'totaloutbond',
@@ -1674,6 +1768,7 @@
                             name: mapped.name,
                             title,
                             zone,
+                            zoneCode,
                             assigned,
                             delivering,
                             delivered,
@@ -1708,8 +1803,8 @@
                     const perf = assigned > 0 ? `${((delivered / assigned) * 100).toFixed(2)}%` : '0.00%';
                     return {
                         Nama: r.name,
-                        TITLE: r.title,
-                        Zone: r.zone,
+                        TITLE: normalizeTitleValue(r.title, 'Rider Dedicated'),
+                        Zone: formatZoneDisplay(r),
                         Assigned: assigned,
                         Delivering: Number(r.delivering) || 0,
                         Delivered: delivered,
@@ -1751,6 +1846,7 @@
 
             tbody.innerHTML = filtered.map(m => {
                 const idx = masterKurir.indexOf(m);
+                const currentTitle = normalizeTitleValue(m.title, 'Rider Dedicated');
                 return `
                     <tr class="hover:bg-slate-800/60">
                         <td class="p-1.5 border border-slate-700">
@@ -1761,7 +1857,7 @@
                         </td>
                         <td class="p-1.5 border border-slate-700">
                             <select onchange="masterKurir[${idx}].title = this.value" class="bg-slate-800 border border-slate-600 rounded px-2 py-1 text-white">
-                                ${TITLES.map(t => `<option value="${t}" ${m.title === t ? 'selected' : ''}>${t}</option>`).join('')}
+                                ${TITLES.map(t => `<option value="${t}" ${currentTitle === t ? 'selected' : ''}>${t}</option>`).join('')}
                             </select>
                         </td>
                         <td class="p-1.5 border border-slate-700">
@@ -1809,7 +1905,9 @@
             persistMasterKurir();
             courierData = courierData.map(row => {
                 const found = masterKurir.find(m => String(m.id).trim() === String(row.id).trim());
-                return found ? { ...row, name: found.name, title: found.title, zone: found.zone } : row;
+                return found
+                    ? { ...row, name: found.name, title: normalizeTitleValue(found.title, 'Rider Dedicated'), zone: found.zone }
+                    : { ...row, title: normalizeTitleValue(row.title, 'Rider Dedicated') };
             });
             closeMasterModal();
             renderAll();
